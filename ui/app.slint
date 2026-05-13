@@ -1,0 +1,1784 @@
+import { Button, CheckBox, LineEdit, ScrollView, Slider } from "std-widgets.slint";
+
+export struct PlayerUiRow {
+    visible: bool,
+    name: string,
+    color-index: int,
+    color-name: string,
+    gold: int,
+    wood: int,
+    stone: int,
+    food-stock: int,
+    food-ratio-text: string,
+    tax-text: string,
+    total-effect-text: string,
+    popularity-text: string,
+    popularity: int,
+    population: int,
+    army: int,
+    buildings: int,
+    traps: int,
+    ff: int,
+    ha: int,
+    skirmishers: int,
+    archers: int,
+    xbows: int,
+    arab-bows: int,
+    slingers: int,
+    camel-lancers: int,
+    shields: int,
+    catapults: int,
+    workshops: int,
+    shooters: int,
+    army-killed: int,
+    army-lost: int,
+    knights: int,
+    extreme-power: int,
+    ff-text: string,
+    stat-gold-earned: int,
+    stat-food-produced: int,
+    stat-wood-produced: int,
+    stat-stone-produced: int,
+    stat-iron-produced: int,
+    stat-weapons-produced: int,
+}
+
+component FieldLabel inherits Text {
+    color: #3b4352;
+    font-size: 12px;
+    font-weight: 600;
+    vertical-alignment: center;
+}
+
+component ValueText inherits Text {
+    color: #111827;
+    font-size: 12px;
+    horizontal-alignment: right;
+    vertical-alignment: center;
+}
+
+component TableHeaderText inherits FieldLabel {
+    in property <length> column_width: 52px;
+    width: root.column_width;
+    horizontal-alignment: right;
+}
+
+component TableGroupText inherits FieldLabel {
+    in property <length> group_width: 120px;
+    width: root.group_width;
+    height: 18px;
+    color: #647084;
+    font-size: 11px;
+    horizontal-alignment: center;
+}
+
+component TableValueText inherits ValueText {
+    in property <length> column_width: 52px;
+    width: root.column_width;
+}
+
+component CompactValue inherits Text {
+    in property <float> overlay_font_size: 16;
+    color: #f8fafc;
+    font-size: root.overlay_font_size * 1px;
+    font-weight: 700;
+    horizontal-alignment: right;
+    vertical-alignment: center;
+}
+
+component CompactLabel inherits Text {
+    in property <float> overlay_font_size: 16;
+    color: #cbd5e1;
+    font-size: max(9px, root.overlay_font_size * 0.62px);
+    font-weight: 600;
+    horizontal-alignment: left;
+    vertical-alignment: center;
+}
+
+component OverlayHeaderRow inherits Rectangle {
+    in property <bool> show_gold;
+    in property <bool> show_population;
+    in property <bool> show_army;
+    in property <bool> show_food_effect;
+    in property <bool> show_tax_effect;
+    in property <bool> show_ha;
+    in property <bool> show_cl;
+    in property <bool> show_shooters;
+    in property <bool> show_acq_gold;
+    in property <bool> show_prod_weapons;
+    in property <bool> show_prod_food;
+    in property <bool> show_prod_stone;
+    in property <bool> show_prod_iron;
+    in property <bool> show_prod_wood;
+    in property <bool> show_total_effect;
+    in property <bool> show_knights;
+    in property <bool> show_ff;
+    in property <bool> show_army_killed;
+    in property <bool> show_army_lost;
+    in property <float> overlay_font_size: 16;
+
+    height: max(16px, root.overlay_font_size * 1.05px);
+    background: transparent;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 12px;
+
+        CompactLabel {
+            text: "Player";
+            overlay_font_size: root.overlay_font_size;
+            width: max(120px, root.overlay_font_size * 7.5px);
+        }
+
+        if root.show_gold: CompactLabel {
+            text: "Gold";
+            overlay_font_size: root.overlay_font_size;
+            width: max(68px, root.overlay_font_size * 4.4px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_population: CompactLabel {
+            text: "Pop";
+            overlay_font_size: root.overlay_font_size;
+            width: max(82px, root.overlay_font_size * 5.2px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_army: CompactLabel {
+            text: "Army";
+            overlay_font_size: root.overlay_font_size;
+            width: max(52px, root.overlay_font_size * 3.4px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_food_effect: CompactLabel {
+            text: "Food";
+            overlay_font_size: root.overlay_font_size;
+            width: max(50px, root.overlay_font_size * 3.3px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_tax_effect: CompactLabel {
+            text: "Tax";
+            overlay_font_size: root.overlay_font_size;
+            width: max(50px, root.overlay_font_size * 3.3px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_ha: CompactLabel {
+            text: "HA";
+            overlay_font_size: root.overlay_font_size;
+            width: max(42px, root.overlay_font_size * 2.8px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_cl: CompactLabel {
+            text: "CL";
+            overlay_font_size: root.overlay_font_size;
+            width: max(42px, root.overlay_font_size * 2.8px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_shooters: CompactLabel {
+            text: "Shooters";
+            overlay_font_size: root.overlay_font_size;
+            width: max(58px, root.overlay_font_size * 3.8px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_acq_gold: CompactLabel {
+            text: "Acq Gold";
+            overlay_font_size: root.overlay_font_size;
+            width: max(76px, root.overlay_font_size * 4.9px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_prod_food: CompactLabel {
+            text: "Prod Food";
+            overlay_font_size: root.overlay_font_size;
+            width: max(78px, root.overlay_font_size * 5.0px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_prod_weapons: CompactLabel {
+            text: "Prod Weap";
+            overlay_font_size: root.overlay_font_size;
+            width: max(78px, root.overlay_font_size * 5.0px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_prod_stone: CompactLabel {
+            text: "Prod Stone";
+            overlay_font_size: root.overlay_font_size;
+            width: max(78px, root.overlay_font_size * 5.0px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_prod_iron: CompactLabel {
+            text: "Prod Iron";
+            overlay_font_size: root.overlay_font_size;
+            width: max(76px, root.overlay_font_size * 4.9px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_prod_wood: CompactLabel {
+            text: "Prod Wood";
+            overlay_font_size: root.overlay_font_size;
+            width: max(78px, root.overlay_font_size * 5.0px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_total_effect: CompactLabel {
+            text: "Total";
+            overlay_font_size: root.overlay_font_size;
+            width: max(56px, root.overlay_font_size * 3.6px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_knights: CompactLabel {
+            text: "Knights";
+            overlay_font_size: root.overlay_font_size;
+            width: max(58px, root.overlay_font_size * 3.8px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_ff: CompactLabel {
+            text: "FF";
+            overlay_font_size: root.overlay_font_size;
+            width: max(42px, root.overlay_font_size * 2.8px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_army_killed: CompactLabel {
+            text: "Army killed";
+            overlay_font_size: root.overlay_font_size;
+            width: max(82px, root.overlay_font_size * 5.2px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_army_lost: CompactLabel {
+            text: "Army lost";
+            overlay_font_size: root.overlay_font_size;
+            width: max(72px, root.overlay_font_size * 4.6px);
+            horizontal-alignment: right;
+        }
+    }
+}
+
+component SettingsRow inherits HorizontalLayout {
+    in property <string> label;
+    spacing: 10px;
+    height: 30px;
+
+    FieldLabel {
+        text: root.label;
+        width: 98px;
+    }
+}
+
+component StatToggle inherits Rectangle {
+    in property <string> text;
+    in-out property <bool> checked;
+    in property <length> box_width: 125px;
+
+    width: root.box_width;
+    height: 24px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: root.checked ? #0b65c9 : #cfd7e5;
+    background: root.checked ? #0b65c9 : #f8fafc;
+
+    Text {
+        text: root.text;
+        color: root.checked ? #ffffff : #111827;
+        font-size: 11px;
+        font-weight: 700;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+
+    TouchArea {
+        clicked => {
+            root.checked = !root.checked;
+        }
+    }
+}
+
+component SettingsTabButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> selected;
+    in property <length> box_width: 180px;
+    callback clicked();
+
+    height: 28px;
+    width: root.box_width;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: root.selected ? #0b65c9 : #cfd7e5;
+    background: root.selected ? #0b65c9 : #f8fafc;
+
+    Text {
+        text: root.text;
+        color: root.selected ? #ffffff : #111827;
+        font-size: 12px;
+        font-weight: 800;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+
+    TouchArea {
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+component PlayerConfigRow inherits HorizontalLayout {
+    in property <string> label;
+    in-out property <string> player_name;
+    in-out property <bool> enabled;
+    in-out property <int> color_index;
+    callback cycle_color();
+
+    height: 26px;
+    spacing: 6px;
+
+    Rectangle {
+        width: 42px;
+        height: 24px;
+        border-radius: 4px;
+        border-width: 1px;
+        border-color: root.enabled ? #0b65c9 : #cfd7e5;
+        background: root.enabled ? #0b65c9 : #f8fafc;
+
+        Text {
+            text: root.label;
+            color: root.enabled ? #ffffff : #111827;
+            font-size: 11px;
+            font-weight: 800;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+
+        TouchArea {
+            clicked => {
+                root.enabled = !root.enabled;
+            }
+        }
+    }
+
+    LineEdit {
+        text <=> root.player_name;
+        width: 106px;
+    }
+
+    Rectangle {
+        width: 58px;
+        height: 26px;
+        border-radius: 4px;
+        border-width: 1px;
+        border-color: #c7cedb;
+        background: root.color_index == 1 ? #df3b30 :
+            root.color_index == 2 ? #f28c28 :
+            root.color_index == 3 ? #f2d447 :
+            root.color_index == 4 ? #3b6eea :
+            root.color_index == 5 ? #1d2430 :
+            root.color_index == 6 ? #8e44d7 :
+            root.color_index == 7 ? #58c7e8 :
+            root.color_index == 8 ? #33a852 :
+            #f8fafc;
+
+        Text {
+            text: root.color_index == 1 ? "Red" :
+                root.color_index == 2 ? "Orange" :
+                root.color_index == 3 ? "Yellow" :
+                root.color_index == 4 ? "Blue" :
+                root.color_index == 5 ? "Black" :
+                root.color_index == 6 ? "Violet" :
+                root.color_index == 7 ? "Sky" :
+                root.color_index == 8 ? "Green" :
+                "None";
+            color: root.color_index == 3 ? #111827 : #ffffff;
+            font-size: 10px;
+            font-weight: 700;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+
+        TouchArea {
+            clicked => {
+                root.cycle_color();
+            }
+        }
+    }
+}
+
+component OverlayPlayerRow inherits Rectangle {
+    in property <PlayerUiRow> player_data;
+    in property <bool> show_gold;
+    in property <bool> show_population;
+    in property <bool> show_army;
+    in property <bool> show_food_effect;
+    in property <bool> show_tax_effect;
+    in property <bool> show_ha;
+    in property <bool> show_cl;
+    in property <bool> show_shooters;
+    in property <bool> show_acq_gold;
+    in property <bool> show_prod_weapons;
+    in property <bool> show_prod_food;
+    in property <bool> show_prod_stone;
+    in property <bool> show_prod_iron;
+    in property <bool> show_prod_wood;
+    in property <bool> show_total_effect;
+    in property <bool> show_knights;
+    in property <bool> show_ff;
+    in property <bool> show_army_killed;
+    in property <bool> show_army_lost;
+    in property <float> overlay_font_size: 16;
+
+    height: max(28px, root.overlay_font_size * 1.9px);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.06);
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 12px;
+
+        Text {
+            text: root.player_data.name;
+            color: root.player_data.color-index == 1 ? #df3b30 :
+                root.player_data.color-index == 2 ? #f28c28 :
+                root.player_data.color-index == 3 ? #f2d447 :
+                root.player_data.color-index == 4 ? #3b6eea :
+                root.player_data.color-index == 5 ? #ffffff :
+                root.player_data.color-index == 6 ? #8e44d7 :
+                root.player_data.color-index == 7 ? #58c7e8 :
+                root.player_data.color-index == 8 ? #33a852 :
+                #f8fafc;
+            font-size: root.overlay_font_size * 1px;
+            font-weight: 800;
+            vertical-alignment: center;
+            width: max(120px, root.overlay_font_size * 7.5px);
+            overflow: elide;
+        }
+
+        if root.show_gold: VerticalLayout {
+            width: max(68px, root.overlay_font_size * 4.4px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.gold; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_population: VerticalLayout {
+            width: max(82px, root.overlay_font_size * 5.2px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.population; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_army: VerticalLayout {
+            width: max(52px, root.overlay_font_size * 3.4px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.army; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_food_effect: VerticalLayout {
+            width: max(50px, root.overlay_font_size * 3.3px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.food-ratio-text; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_tax_effect: VerticalLayout {
+            width: max(50px, root.overlay_font_size * 3.3px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.tax-text; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_ha: VerticalLayout {
+            width: max(42px, root.overlay_font_size * 2.8px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.ha; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_cl: VerticalLayout {
+            width: max(42px, root.overlay_font_size * 2.8px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.camel-lancers; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_shooters: VerticalLayout {
+            width: max(58px, root.overlay_font_size * 3.8px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.shooters; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_acq_gold: VerticalLayout {
+            width: max(76px, root.overlay_font_size * 4.9px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.stat-gold-earned; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_prod_food: VerticalLayout {
+            width: max(78px, root.overlay_font_size * 5.0px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.stat-food-produced; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_prod_weapons: VerticalLayout {
+            width: max(78px, root.overlay_font_size * 5.0px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.stat-weapons-produced; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_prod_stone: VerticalLayout {
+            width: max(78px, root.overlay_font_size * 5.0px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.stat-stone-produced; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_prod_iron: VerticalLayout {
+            width: max(76px, root.overlay_font_size * 4.9px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.stat-iron-produced; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_prod_wood: VerticalLayout {
+            width: max(78px, root.overlay_font_size * 5.0px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.stat-wood-produced; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_total_effect: VerticalLayout {
+            width: max(56px, root.overlay_font_size * 3.6px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.total-effect-text; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_knights: VerticalLayout {
+            width: max(58px, root.overlay_font_size * 3.8px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.knights; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_ff: VerticalLayout {
+            width: max(42px, root.overlay_font_size * 2.8px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.ff-text; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_army_killed: VerticalLayout {
+            width: max(82px, root.overlay_font_size * 5.2px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.army-killed; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_army_lost: VerticalLayout {
+            width: max(72px, root.overlay_font_size * 4.6px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.army-lost; overlay_font_size: root.overlay_font_size; }
+        }
+
+    }
+}
+
+component PlayerTable inherits Rectangle {
+    in property <[PlayerUiRow]> player_rows;
+
+    border-radius: 6px;
+    background: #ffffff;
+    border-color: #dde3ee;
+    border-width: 1px;
+
+    HorizontalLayout {
+        padding: 12px;
+        spacing: 12px;
+
+        VerticalLayout {
+            width: 246px;
+            spacing: 8px;
+
+            HorizontalLayout {
+                height: 18px;
+                spacing: 8px;
+                TableGroupText { text: ""; group_width: 118px; }
+                TableGroupText { text: ""; group_width: 58px; }
+                TableGroupText { text: ""; group_width: 54px; }
+            }
+
+            HorizontalLayout {
+                height: 22px;
+                spacing: 8px;
+                FieldLabel { text: "Player"; width: 118px; }
+                FieldLabel { text: "Color"; width: 58px; horizontal-alignment: center; }
+                FieldLabel { text: "Overlay"; width: 54px; horizontal-alignment: center; }
+            }
+
+            for row in root.player_rows: HorizontalLayout {
+                height: 28px;
+                spacing: 8px;
+
+                Text {
+                    text: row.name;
+                    width: 118px;
+                    color: row.visible ? #111827 : #8a94a6;
+                    font-size: 13px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+
+                Text {
+                    text: row.color-name;
+                    width: 58px;
+                    color: row.color-index == 1 ? #df3b30 :
+                        row.color-index == 2 ? #f28c28 :
+                        row.color-index == 3 ? #b69200 :
+                        row.color-index == 4 ? #3b6eea :
+                        row.color-index == 5 ? #111827 :
+                        row.color-index == 6 ? #8e44d7 :
+                        row.color-index == 7 ? #168aad :
+                        row.color-index == 8 ? #33a852 :
+                        #111827;
+                    font-size: 12px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                Text {
+                    text: row.visible ? "shown" : "hidden";
+                    width: 54px;
+                    color: row.visible ? #166534 : #8a94a6;
+                    font-size: 12px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        ScrollView {
+            horizontal-stretch: 1;
+            vertical-stretch: 1;
+
+            VerticalLayout {
+                width: 1780px;
+                spacing: 8px;
+
+                HorizontalLayout {
+                    height: 18px;
+                    spacing: 8px;
+
+                    TableGroupText { text: "Game stats"; group_width: 526px; }
+                    TableGroupText { text: "Army"; group_width: 698px; }
+                    TableGroupText { text: "Buildings"; group_width: 46px; }
+                    TableGroupText { text: "Acquired resources"; group_width: 434px; }
+                    TableGroupText { text: "Fear"; group_width: 36px; }
+                }
+
+                HorizontalLayout {
+                    height: 22px;
+                    spacing: 8px;
+
+                    TableHeaderText { text: "Gold"; column_width: 70px; }
+                    TableHeaderText { text: "Wood"; column_width: 52px; }
+                    TableHeaderText { text: "Stone"; column_width: 52px; }
+                    TableHeaderText { text: "Food"; column_width: 52px; }
+                    TableHeaderText { text: "Pop"; column_width: 44px; }
+                    TableHeaderText { text: "FoodFx"; column_width: 52px; }
+                    TableHeaderText { text: "Tax"; column_width: 42px; }
+                    TableHeaderText { text: "Total"; column_width: 52px; }
+                    TableHeaderText { text: "Army"; column_width: 46px; }
+                    TableHeaderText { text: "HA"; column_width: 38px; }
+                    TableHeaderText { text: "CL"; column_width: 38px; }
+                    TableHeaderText { text: "Knight"; column_width: 46px; }
+                    TableHeaderText { text: "Skirm"; column_width: 48px; }
+                    TableHeaderText { text: "Arch"; column_width: 42px; }
+                    TableHeaderText { text: "ArabBow"; column_width: 58px; }
+                    TableHeaderText { text: "Xbow"; column_width: 44px; }
+                    TableHeaderText { text: "Sling"; column_width: 44px; }
+                    TableHeaderText { text: "Shoot"; column_width: 48px; }
+                    TableHeaderText { text: "Killed"; column_width: 62px; }
+                    TableHeaderText { text: "Lost"; column_width: 48px; }
+                    TableHeaderText { text: "Shield"; column_width: 52px; }
+                    TableHeaderText { text: "Cata"; column_width: 42px; }
+                    TableHeaderText { text: "Work"; column_width: 46px; }
+                    TableHeaderText { text: "AcqGold"; column_width: 70px; }
+                    TableHeaderText { text: "FoodPr"; column_width: 64px; }
+                    TableHeaderText { text: "WeapPr"; column_width: 64px; }
+                    TableHeaderText { text: "StonePr"; column_width: 68px; }
+                    TableHeaderText { text: "IronPr"; column_width: 64px; }
+                    TableHeaderText { text: "WoodPr"; column_width: 64px; }
+                    TableHeaderText { text: "FF"; column_width: 36px; }
+                }
+
+                for row in root.player_rows: HorizontalLayout {
+                    height: 28px;
+                    spacing: 8px;
+
+                    TableValueText { text: row.gold; column_width: 70px; }
+                    TableValueText { text: row.wood; column_width: 52px; }
+                    TableValueText { text: row.stone; column_width: 52px; }
+                    TableValueText { text: row.food-stock; column_width: 52px; }
+                    TableValueText { text: row.population; column_width: 44px; }
+                    TableValueText { text: row.food-ratio-text; column_width: 52px; }
+                    TableValueText { text: row.tax-text; column_width: 42px; }
+                    TableValueText { text: row.total-effect-text; column_width: 52px; }
+                    TableValueText { text: row.army; column_width: 46px; }
+                    TableValueText { text: row.ha; column_width: 38px; }
+                    TableValueText { text: row.camel-lancers; column_width: 38px; }
+                    TableValueText { text: row.knights; column_width: 46px; }
+                    TableValueText { text: row.skirmishers; column_width: 48px; }
+                    TableValueText { text: row.archers; column_width: 42px; }
+                    TableValueText { text: row.arab-bows; column_width: 58px; }
+                    TableValueText { text: row.xbows; column_width: 44px; }
+                    TableValueText { text: row.slingers; column_width: 44px; }
+                    TableValueText { text: row.shooters; column_width: 48px; }
+                    TableValueText { text: row.army-killed; column_width: 62px; }
+                    TableValueText { text: row.army-lost; column_width: 48px; }
+                    TableValueText { text: row.shields; column_width: 52px; }
+                    TableValueText { text: row.catapults; column_width: 42px; }
+                    TableValueText { text: row.workshops; column_width: 46px; }
+                    TableValueText { text: row.stat-gold-earned; column_width: 70px; }
+                    TableValueText { text: row.stat-food-produced; column_width: 64px; }
+                    TableValueText { text: row.stat-weapons-produced; column_width: 64px; }
+                    TableValueText { text: row.stat-stone-produced; column_width: 68px; }
+                    TableValueText { text: row.stat-iron-produced; column_width: 64px; }
+                    TableValueText { text: row.stat-wood-produced; column_width: 64px; }
+                    TableValueText { text: row.ff-text; column_width: 36px; }
+                }
+            }
+        }
+    }
+}
+
+export component AppWindow inherits Window {
+    in-out property <string> player1_name: "Player 1";
+    in-out property <string> player2_name: "Player 2";
+    in-out property <string> player3_name: "Player 3";
+    in-out property <string> player4_name: "Player 4";
+    in-out property <string> player5_name: "Player 5";
+    in-out property <string> player6_name: "Player 6";
+    in-out property <string> player7_name: "Player 7";
+    in-out property <string> player8_name: "Player 8";
+    in-out property <int> player1_color: 1;
+    in-out property <int> player2_color: 2;
+    in-out property <int> player3_color: 3;
+    in-out property <int> player4_color: 4;
+    in-out property <int> player5_color: 5;
+    in-out property <int> player6_color: 6;
+    in-out property <int> player7_color: 7;
+    in-out property <int> player8_color: 8;
+    in-out property <string> tournament_title: "Title";
+    in-out property <string> match_label: "Description (score, etc.)";
+    in-out property <float> panel_opacity: 0.78;
+    in-out property <float> overlay_font_size: 16;
+    in-out property <float> timer_panel_opacity: 0.78;
+    in-out property <float> timer_font_size: 16;
+    in-out property <float> game_speed: 50;
+    in-out property <int> timer_player_id: 1;
+    in-out property <float> heavy_refresh_interval_ms: 200;
+    in-out property <bool> overlay_frame: true;
+    in-out property <bool> timer_frame: true;
+    in-out property <bool> pin_on_top: true;
+    in-out property <bool> admin_mode: false;
+    in-out property <string> admin_key_input: "";
+    in-out property <bool> admin_frame: true;
+    in-out property <int> admin_game_player_id: 1;
+    in-out property <int> admin_ui_player_id: 1;
+    in-out property <int> settings_tab: 0;
+    in-out property <bool> show_player1: true;
+    in-out property <bool> show_player2: true;
+    in-out property <bool> show_player3: true;
+    in-out property <bool> show_player4: true;
+    in-out property <bool> show_player5: false;
+    in-out property <bool> show_player6: false;
+    in-out property <bool> show_player7: false;
+    in-out property <bool> show_player8: false;
+    in-out property <bool> show_gold: true;
+    in-out property <bool> show_population: true;
+    in-out property <bool> show_army: true;
+    in-out property <bool> show_food_effect: true;
+    in-out property <bool> show_tax_effect: true;
+    in-out property <bool> show_ha: true;
+    in-out property <bool> show_cl: true;
+    in-out property <bool> show_shooters: false;
+    in-out property <bool> show_acq_gold: false;
+    in-out property <bool> show_prod_weapons: false;
+    in-out property <bool> show_prod_food: false;
+    in-out property <bool> show_prod_stone: false;
+    in-out property <bool> show_prod_iron: false;
+    in-out property <bool> show_prod_wood: false;
+    in-out property <bool> show_total_effect: false;
+    in-out property <bool> show_knights: true;
+    in-out property <bool> show_ff: false;
+    in-out property <bool> show_army_killed: false;
+    in-out property <bool> show_army_lost: false;
+    in-out property <bool> shooter_count_skirmishers: false;
+    in-out property <bool> shooter_count_archers: false;
+    in-out property <bool> shooter_count_xbows: false;
+    in-out property <bool> shooter_count_arab_bows: false;
+    in-out property <bool> shooter_count_slingers: false;
+    in property <string> process_status: "";
+    in property <[PlayerUiRow]> player_rows;
+
+    callback show_overlay();
+    callback hide_overlay();
+    callback show_timer();
+    callback hide_timer();
+    callback show_admin();
+    callback hide_admin();
+    callback cycle_player_color(int);
+    callback submit_admin_key(string);
+    callback request_admin_ui_player(int);
+
+    title: "Stronghold Crusader DE, Monitor";
+    icon: @image-url("../assets/icon.png");
+    background: #f4f7fb;
+    preferred-width: 1460px;
+    preferred-height: 900px;
+    min-width: 1120px;
+    min-height: 620px;
+
+    Rectangle {
+        background: #f4f7fb;
+
+        HorizontalLayout {
+            padding: 12px;
+            spacing: 12px;
+
+            VerticalLayout {
+                width: 550px;
+                spacing: 5px;
+
+                    Text {
+                        text: "Stronghold Crusader DE - Tools";
+                        color: #101827;
+                        font-size: 22px;
+                        font-weight: 800;
+                    }
+
+                    Text {
+                        text: root.process_status;
+                        color: #4b5563;
+                        font-size: 12px;
+                    }
+
+                    Rectangle {
+                    border-radius: 6px;
+                    background: #ffffff;
+                    border-color: #dde3ee;
+                    border-width: 1px;
+                    height: 162px;
+
+                    VerticalLayout {
+                        padding: 12px;
+                        spacing: 9px;
+
+                        SettingsRow {
+                            label: "Title";
+                            LineEdit { text <=> root.tournament_title; }
+                        }
+
+                        SettingsRow {
+                            label: "Description";
+                            LineEdit { text <=> root.match_label; }
+                        }
+
+                        SettingsRow {
+                            label: "Admin key";
+                            HorizontalLayout {
+                                spacing: 8px;
+
+                                LineEdit {
+                                    text <=> root.admin_key_input;
+                                    input-type: InputType.password;
+                                    placeholder-text: root.admin_mode ? "Admin mode unlocked" : "Enter admin key";
+                                    enabled: !root.admin_mode;
+                                    accepted(text) => {
+                                        root.submit_admin_key(text);
+                                        root.admin_key_input = "";
+                                    }
+                                }
+
+                                Button {
+                                    text: "Unlock";
+                                    width: 76px;
+                                    enabled: !root.admin_mode;
+                                    clicked => {
+                                        root.submit_admin_key(root.admin_key_input);
+                                        root.admin_key_input = "";
+                                    }
+                                }
+                            }
+                        }
+
+                        HorizontalLayout {
+                            height: 28px;
+                            spacing: 18px;
+
+                            CheckBox {
+                                text: "Always on top";
+                                checked <=> root.pin_on_top;
+                            }
+
+                            FieldLabel {
+                                text: root.admin_mode ? "Admin mode" : "Read-only mode";
+                                color: root.admin_mode ? #b45309 : #166534;
+                            }
+                        }
+                    }
+                }
+
+                    Rectangle {
+                    border-radius: 6px;
+                    background: #ffffff;
+                    border-color: #dde3ee;
+                    border-width: 1px;
+                    height: 168px;
+
+                    VerticalLayout {
+                        padding: 12px;
+                        spacing: 7px;
+
+                        Text {
+                            text: "Player slots";
+                            color: #111827;
+                            font-size: 14px;
+                            font-weight: 800;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 60px;
+
+                            VerticalLayout {
+                                spacing: 5px;
+                                PlayerConfigRow { label: "P1"; player_name <=> root.player1_name; enabled <=> root.show_player1; color_index <=> root.player1_color; cycle_color => { root.cycle_player_color(1); } }
+                                PlayerConfigRow { label: "P2"; player_name <=> root.player2_name; enabled <=> root.show_player2; color_index <=> root.player2_color; cycle_color => { root.cycle_player_color(2); } }
+                                PlayerConfigRow { label: "P3"; player_name <=> root.player3_name; enabled <=> root.show_player3; color_index <=> root.player3_color; cycle_color => { root.cycle_player_color(3); } }
+                                PlayerConfigRow { label: "P4"; player_name <=> root.player4_name; enabled <=> root.show_player4; color_index <=> root.player4_color; cycle_color => { root.cycle_player_color(4); } }
+                            }
+
+                            VerticalLayout {
+                                spacing: 5px;
+                                PlayerConfigRow { label: "P5"; player_name <=> root.player5_name; enabled <=> root.show_player5; color_index <=> root.player5_color; cycle_color => { root.cycle_player_color(5); } }
+                                PlayerConfigRow { label: "P6"; player_name <=> root.player6_name; enabled <=> root.show_player6; color_index <=> root.player6_color; cycle_color => { root.cycle_player_color(6); } }
+                                PlayerConfigRow { label: "P7"; player_name <=> root.player7_name; enabled <=> root.show_player7; color_index <=> root.player7_color; cycle_color => { root.cycle_player_color(7); } }
+                                PlayerConfigRow { label: "P8"; player_name <=> root.player8_name; enabled <=> root.show_player8; color_index <=> root.player8_color; cycle_color => { root.cycle_player_color(8); } }
+                            }
+                        }
+                    }
+                }
+
+                    Rectangle {
+                    border-radius: 6px;
+                    background: #ffffff;
+                    border-color: #dde3ee;
+                    border-width: 1px;
+                    height: 450px;
+
+                    VerticalLayout {
+                        padding: 12px;
+                        spacing: 6px;
+                        alignment: start;
+
+                        HorizontalLayout {
+                            height: 28px;
+                            spacing: 8px;
+                            SettingsTabButton {
+                                text: "Overlay settings";
+                                selected: root.settings_tab == 0;
+                                box_width: 167px;
+                                clicked => { root.settings_tab = 0; }
+                            }
+                            SettingsTabButton {
+                                text: "Game ticks timer";
+                                selected: root.settings_tab == 1;
+                                box_width: 167px;
+                                clicked => { root.settings_tab = 1; }
+                            }
+                            if root.admin_mode: SettingsTabButton {
+                                text: "Admin panel";
+                                selected: root.settings_tab == 2;
+                                box_width: 167px;
+                                clicked => { root.settings_tab = 2; }
+                            }
+                        }
+
+                        if root.settings_tab == 0: VerticalLayout {
+                            spacing: 6px;
+                            SettingsRow {
+                                label: "Panel opacity";
+                                Slider {
+                                    minimum: 0.35;
+                                    maximum: 0.95;
+                                    value <=> root.panel_opacity;
+                                }
+                            }
+
+                            SettingsRow {
+                                label: "Font size";
+                                Slider {
+                                    minimum: 12;
+                                    maximum: 24;
+                                    value <=> root.overlay_font_size;
+                                }
+                            }
+
+                            SettingsRow {
+                                label: "Heavy read ms";
+                                Slider {
+                                    minimum: 100;
+                                    maximum: 1000;
+                                    value <=> root.heavy_refresh_interval_ms;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                height: 28px;
+                                spacing: 18px;
+
+                                CheckBox {
+                                    text: "Movable frame";
+                                    checked <=> root.overlay_frame;
+                                    width: 150px;
+                                }
+
+                                Button {
+                                    text: "Show overlay";
+                                    width: 122px;
+                                    clicked => {
+                                        root.show_overlay();
+                                    }
+                                }
+
+                                Button {
+                                    text: "Hide overlay";
+                                    width: 122px;
+                                    clicked => {
+                                        root.hide_overlay();
+                                    }
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 8px;
+                                StatToggle { text: "Gold"; checked <=> root.show_gold; }
+                                StatToggle { text: "Population"; checked <=> root.show_population; }
+                                StatToggle { text: "Food"; checked <=> root.show_food_effect; }
+                                StatToggle { text: "Tax"; checked <=> root.show_tax_effect; }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 8px;
+                                StatToggle { text: "Popularity"; checked <=> root.show_total_effect; }
+                                StatToggle { text: "Fear factor"; checked <=> root.show_ff; }
+                                StatToggle { text: "Army size"; checked <=> root.show_army; }
+                                StatToggle { text: "Horse archer"; checked <=> root.show_ha; }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 8px;
+                                StatToggle { text: "Camel lancer"; checked <=> root.show_cl; }
+                                StatToggle { text: "Knights"; checked <=> root.show_knights; }
+                                StatToggle { text: "Shooters"; checked <=> root.show_shooters; }
+                                StatToggle { text: "Army killed"; checked <=> root.show_army_killed; }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 8px;
+                                StatToggle { text: "Army lost"; checked <=> root.show_army_lost; }
+                                StatToggle { text: "Acquired Gold"; checked <=> root.show_acq_gold; }
+                                StatToggle { text: "Produced Food"; checked <=> root.show_prod_food; }
+                                StatToggle { text: "Produced Weapons"; checked <=> root.show_prod_weapons; }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 8px;
+                                StatToggle { text: "Produced Stone"; checked <=> root.show_prod_stone; }
+                                StatToggle { text: "Produced Iron"; checked <=> root.show_prod_iron; }
+                                StatToggle { text: "Produced Wood"; checked <=> root.show_prod_wood; }
+                            }
+
+                            Rectangle {
+                                width: 24px;
+                                height: 10px;
+                                background: transparent;
+                            }    
+
+                            Text {
+                                text: "Shooter types (required 'Shooters')";
+                                color: #434750;
+                                font-size: 12px;
+                                font-weight: 800;
+                            }
+
+                            HorizontalLayout {
+                                spacing: 8px;
+                                StatToggle { text: "Horse archer"; checked <=> root.show_ha;}
+                                StatToggle { text: "Skirmisher"; checked <=> root.shooter_count_skirmishers; }
+                                StatToggle { text: "European Archer"; checked <=> root.shooter_count_archers; }
+                                StatToggle { text: "Arabian archer"; checked <=> root.shooter_count_arab_bows; }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 8px;
+                                StatToggle { text: "Crossbow"; checked <=> root.shooter_count_xbows; }
+                                StatToggle { text: "Slingers"; checked <=> root.shooter_count_slingers; }
+                            }
+                        }
+
+                        if root.settings_tab == 1: VerticalLayout {
+                            spacing: 6px;
+                            HorizontalLayout {
+                                height: 30px;
+                                spacing: 10px;
+
+                                FieldLabel {
+                                    text: "Game speed";
+                                    width: 98px;
+                                }
+
+                                Button {
+                                    text: "-";
+                                    width: 34px;
+                                    clicked => {
+                                        root.game_speed = max(10, root.game_speed - 5);
+                                    }
+                                }
+
+                                Text {
+                                    text: root.game_speed;
+                                    color: #111827;
+                                    font-size: 12px;
+                                    font-weight: 800;
+                                    width: 48px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+
+                                Button {
+                                    text: "+";
+                                    width: 34px;
+                                    clicked => {
+                                        root.game_speed = min(90, root.game_speed + 5);
+                                    }
+                                }
+                            }
+                            HorizontalLayout {
+                                height: 30px;
+                                spacing: 10px;
+
+                                FieldLabel {
+                                    text: "Player id";
+                                    width: 98px;
+                                }
+
+                                Button {
+                                    text: "<";
+                                    width: 34px;
+                                    clicked => {
+                                        root.timer_player_id = max(1, root.timer_player_id - 1);
+                                    }
+                                }
+
+                                Text {
+                                    text: root.timer_player_id;
+                                    color: #111827;
+                                    font-size: 12px;
+                                    font-weight: 800;
+                                    width: 48px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+
+                                Button {
+                                    text: ">";
+                                    width: 34px;
+                                    clicked => {
+                                        root.timer_player_id = min(8, root.timer_player_id + 1);
+                                    }
+                                }
+                            }
+                            SettingsRow {
+                                label: "Font size";
+                                Slider {
+                                    minimum: 12;
+                                    maximum: 18;
+                                    value <=> root.timer_font_size;
+                                }
+                            }
+                            SettingsRow {
+                                label: "Panel opacity";
+                                Slider {
+                                    minimum: 0.35;
+                                    maximum: 0.95;
+                                    value <=> root.timer_panel_opacity;
+                                }
+                            }
+                            HorizontalLayout {
+                                height: 28px;
+                                spacing: 18px;
+                                CheckBox {
+                                    text: "Movable frame";
+                                    checked <=> root.timer_frame;
+                                    width: 150px;
+                                }
+                                Button {
+                                    text: "Show timer";
+                                    width: 122px;
+                                    clicked => { root.show_timer(); }
+                                }
+                                Button {
+                                    text: "Hide timer";
+                                    width: 122px;
+                                    clicked => { root.hide_timer(); }
+                                }
+                            }
+                        }
+
+                        if root.settings_tab == 2 && root.admin_mode: VerticalLayout {
+                            spacing: 8px;
+
+                            Text {
+                                text: "Admin panel";
+                                color: #111827;
+                                font-size: 14px;
+                                font-weight: 800;
+                            }
+
+                            HorizontalLayout {
+                                height: 30px;
+                                spacing: 10px;
+
+                                FieldLabel {
+                                    text: "UI player id";
+                                    width: 98px;
+                                }
+
+                                Text {
+                                    text: "Game P" + root.admin_game_player_id;
+                                    color: #4b5563;
+                                    font-size: 12px;
+                                    font-weight: 800;
+                                    width: 78px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+
+                                Button {
+                                    text: "<";
+                                    width: 34px;
+                                    clicked => {
+                                        root.request_admin_ui_player(max(1, root.admin_ui_player_id - 1));
+                                    }
+                                }
+
+                                Text {
+                                    text: root.admin_ui_player_id;
+                                    color: #111827;
+                                    font-size: 12px;
+                                    font-weight: 800;
+                                    width: 48px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+
+                                Button {
+                                    text: ">";
+                                    width: 34px;
+                                    clicked => {
+                                        root.request_admin_ui_player(min(8, root.admin_ui_player_id + 1));
+                                    }
+                                }
+                            }
+
+                            HorizontalLayout {
+                                height: 28px;
+                                spacing: 18px;
+
+                                CheckBox {
+                                    text: "Movable frame";
+                                    checked <=> root.admin_frame;
+                                    width: 150px;
+                                }
+
+                                Button {
+                                    text: "Show admin";
+                                    width: 122px;
+                                    clicked => { root.show_admin(); }
+                                }
+
+                                Button {
+                                    text: "Hide admin";
+                                    width: 122px;
+                                    clicked => { root.hide_admin(); }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                horizontal-stretch: 1;
+                vertical-stretch: 1;
+                clip: true;
+
+                PlayerTable {
+                    player_rows: root.player_rows;
+                    width: parent.width;
+                    height: parent.height;
+                }
+            }
+        }
+    }
+}
+
+export component OverlayWindow inherits Window {
+    in property <[PlayerUiRow]> player_rows;
+    in property <string> tournament_title: "Title";
+    in property <string> match_label: "Description";
+    in property <float> panel_opacity: 0.78;
+    in property <float> overlay_font_size: 28;
+    in property <bool> overlay_frame: true;
+    in property <bool> pin_on_top: false;
+    in property <bool> show_gold: true;
+    in property <bool> show_population: true;
+    in property <bool> show_army: true;
+    in property <bool> show_food_effect: true;
+    in property <bool> show_tax_effect: true;
+    in property <bool> show_ha: true;
+    in property <bool> show_cl: true;
+    in property <bool> show_shooters: false;
+    in property <bool> show_acq_gold: false;
+    in property <bool> show_prod_weapons: false;
+    in property <bool> show_prod_food: false;
+    in property <bool> show_prod_stone: false;
+    in property <bool> show_prod_iron: false;
+    in property <bool> show_prod_wood: false;
+    in property <bool> show_total_effect: false;
+    in property <bool> show_knights: true;
+    in property <bool> show_ff: false;
+    in property <bool> show_army_killed: false;
+    in property <bool> show_army_lost: false;
+    in property <float> overlay_width: 500;
+    in property <float> overlay_height: 520;
+
+    callback hide_overlay();
+    callback request_overlay_frame(bool);
+
+    title: "Stronghold Crusader DE, Monitor";
+    icon: @image-url("../assets/icon.png");
+    always-on-top: root.pin_on_top;
+    no-frame: !root.overlay_frame;
+    background: transparent;
+    width: root.overlay_width * 1px;
+    height: root.overlay_height * 1px;
+
+    Rectangle {
+        background: transparent;
+
+        Rectangle {
+            x: 0px;
+            y: 0px;
+            width: parent.width;
+            height: parent.height;
+            border-radius: 8px;
+            background: rgba(13, 18, 27, root.panel_opacity);
+            border-color: rgba(255, 255, 255, 0.14);
+            border-width: 1px;
+        }
+
+        VerticalLayout {
+            padding: 7px;
+            spacing: 5px;
+
+            HorizontalLayout {
+                height: max(24px, root.overlay_font_size * 1.25px);
+                spacing: 5px;
+
+                VerticalLayout {
+                    spacing: 0px;
+                    Text {
+                        text: root.tournament_title;
+                        color: #f8fafc;
+                        font-size: max(11px, root.overlay_font_size * 0.82px);
+                        font-weight: 800;
+                        overflow: elide;
+                    }
+                    Text {
+                        text: root.match_label;
+                        color: #cbd5e1;
+                        font-size: max(9px, root.overlay_font_size * 0.62px);
+                        overflow: elide;
+                    }
+                }
+
+                Button {
+                    text: "Hide";
+                    width: 54px;
+                    height: 24px;
+                    clicked => {
+                        root.hide_overlay();
+                    }
+                }
+
+                Button {
+                    text: root.overlay_frame ? "Frame on" : "Frame off";
+                    width: 82px;
+                    height: 24px;
+                    clicked => {
+                        root.request_overlay_frame(!root.overlay_frame);
+                    }
+                }
+            }
+
+            OverlayHeaderRow {
+                show_gold: root.show_gold;
+                show_population: root.show_population;
+                show_army: root.show_army;
+                show_food_effect: root.show_food_effect;
+                show_tax_effect: root.show_tax_effect;
+                show_ha: root.show_ha;
+                show_cl: root.show_cl;
+                show_shooters: root.show_shooters;
+                show_acq_gold: root.show_acq_gold;
+                show_prod_weapons: root.show_prod_weapons;
+                show_prod_food: root.show_prod_food;
+                show_prod_stone: root.show_prod_stone;
+                show_prod_iron: root.show_prod_iron;
+                show_prod_wood: root.show_prod_wood;
+                show_total_effect: root.show_total_effect;
+                show_knights: root.show_knights;
+                show_ff: root.show_ff;
+                show_army_killed: root.show_army_killed;
+                show_army_lost: root.show_army_lost;
+                overlay_font_size: root.overlay_font_size;
+            }
+
+            for row in root.player_rows: OverlayPlayerRow {
+                player_data: row;
+                show_gold: root.show_gold;
+                show_population: root.show_population;
+                show_army: root.show_army;
+                show_food_effect: root.show_food_effect;
+                show_tax_effect: root.show_tax_effect;
+                show_ha: root.show_ha;
+                show_cl: root.show_cl;
+                show_shooters: root.show_shooters;
+                show_acq_gold: root.show_acq_gold;
+                show_prod_weapons: root.show_prod_weapons;
+                show_prod_food: root.show_prod_food;
+                show_prod_stone: root.show_prod_stone;
+                show_prod_iron: root.show_prod_iron;
+                show_prod_wood: root.show_prod_wood;
+                show_total_effect: root.show_total_effect;
+                show_knights: root.show_knights;
+                show_ff: root.show_ff;
+                show_army_killed: root.show_army_killed;
+                show_army_lost: root.show_army_lost;
+                overlay_font_size: root.overlay_font_size;
+            }
+        }
+    }
+}
+
+export component TimerWindow inherits Window {
+    in property <float> panel_opacity: 0.78;
+    in property <float> timer_font_size: 16;
+    in property <bool> timer_frame: true;
+    in property <bool> pin_on_top: false;
+    in property <string> ticks_text: "0";
+    in property <string> day_text: "1";
+    in property <string> month_text: "Jul";
+    in property <string> year_text: "1181";
+    in property <string> elapsed_text: "00:00";
+    in property <string> game_speed_text: "50";
+    in property <string> timer_player_text: "P1";
+    in property <string> acquired_gold_text: "0";
+    in property <string> produced_food_text: "0";
+    in property <string> produced_stone_text: "0";
+    in property <string> produced_iron_text: "0";
+    in property <string> produced_wood_text: "0";
+    in property <string> produced_weapons_text: "0";
+    private property <float> timer_width_scale: max(1, root.timer_font_size / 12);
+    private property <length> timer_ticks_width: 78px * root.timer_width_scale;
+    private property <length> timer_day_width: 25px * root.timer_width_scale;
+    private property <length> timer_month_width: 30px * root.timer_width_scale;
+    private property <length> timer_year_width: 30px * root.timer_width_scale;
+    private property <length> timer_time_width: 50px * root.timer_width_scale;
+    private property <length> timer_gs_width: 32px * root.timer_width_scale;
+    private property <length> timer_acq_gold_width: 70px * root.timer_width_scale;
+    private property <length> timer_prod_food_width: 50px * root.timer_width_scale;
+    private property <length> timer_prod_stone_width: 50px * root.timer_width_scale;
+    private property <length> timer_prod_iron_width: 50px * root.timer_width_scale;
+    private property <length> timer_prod_wood_width: 50px * root.timer_width_scale;
+    private property <length> timer_prod_weapons_width: 50px * root.timer_width_scale;
+
+    callback hide_timer();
+    callback request_timer_frame(bool);
+    callback request_timer_player(int);
+
+    title: "Game ticks timer";
+    icon: @image-url("../assets/icon.png");
+    always-on-top: root.pin_on_top;
+    no-frame: !root.timer_frame;
+    background: transparent;
+    width: max(520px, root.timer_ticks_width + root.timer_day_width + root.timer_month_width + root.timer_year_width + root.timer_time_width + root.timer_gs_width + root.timer_acq_gold_width + root.timer_prod_food_width + root.timer_prod_stone_width + root.timer_prod_iron_width + root.timer_prod_wood_width + root.timer_prod_weapons_width + 150px);
+    height: max(95px, root.timer_font_size * 6.8px);
+
+    Rectangle {
+        background: transparent;
+
+        Rectangle {
+            x: 0px;
+            y: 0px;
+            width: parent.width;
+            height: parent.height;
+            border-radius: 8px;
+            background: rgba(13, 18, 27, root.panel_opacity);
+            border-color: rgba(255, 255, 255, 0.14);
+            border-width: 1px;
+        }
+
+        VerticalLayout {
+            padding: 8px;
+            spacing: 6px;
+
+            HorizontalLayout {
+                height: max(26px, root.timer_font_size * 1.3px);
+                spacing: 6px;
+
+                Text {
+                    text: "Game ticks timer";
+                    color: #f8fafc;
+                    font-size: root.timer_font_size * 1px;
+                    font-weight: 800;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+
+                Button {
+                    text: "<";
+                    width: 32px;
+                    height: 24px;
+                    clicked => { root.request_timer_player(-1); }
+                }
+
+                Text {
+                    text: root.timer_player_text;
+                    color: #ffffff;
+                    font-size: 12px;
+                    font-weight: 800;
+                    width: 48px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                Button {
+                    text: ">";
+                    width: 32px;
+                    height: 24px;
+                    clicked => { root.request_timer_player(1); }
+                }
+
+                Button {
+                    text: "Hide";
+                    width: 54px;
+                    height: 24px;
+                    clicked => { root.hide_timer(); }
+                }
+
+                Button {
+                    text: root.timer_frame ? "Frame on" : "Frame off";
+                    width: 82px;
+                    height: 24px;
+                    clicked => { root.request_timer_frame(!root.timer_frame); }
+                }
+            }
+
+            HorizontalLayout {
+                height: max(18px, root.timer_font_size * 1.1px);
+                spacing: 10px;
+                CompactLabel { text: "Ticks"; overlay_font_size: root.timer_font_size; width: root.timer_ticks_width; horizontal-alignment: right; }
+                CompactLabel { text: "Day"; overlay_font_size: root.timer_font_size; width: root.timer_day_width; horizontal-alignment: right; }
+                CompactLabel { text: "Month"; overlay_font_size: root.timer_font_size; width: root.timer_month_width; horizontal-alignment: right; }
+                CompactLabel { text: "Year"; overlay_font_size: root.timer_font_size; width: root.timer_year_width; horizontal-alignment: right; }
+                CompactLabel { text: "Time"; overlay_font_size: root.timer_font_size; width: root.timer_time_width; horizontal-alignment: right; }
+                CompactLabel { text: "GS"; overlay_font_size: root.timer_font_size; width: root.timer_gs_width; horizontal-alignment: right; }
+                CompactLabel { text: "Acq. Gold"; overlay_font_size: root.timer_font_size; width: root.timer_acq_gold_width; horizontal-alignment: right; }
+                CompactLabel { text: "Prod. Food"; overlay_font_size: root.timer_font_size; width: root.timer_prod_food_width; horizontal-alignment: right; }
+                CompactLabel { text: "Prod. Stone"; overlay_font_size: root.timer_font_size; width: root.timer_prod_stone_width; horizontal-alignment: right; }
+                CompactLabel { text: "Prod. Iron"; overlay_font_size: root.timer_font_size; width: root.timer_prod_iron_width; horizontal-alignment: right; }
+                CompactLabel { text: "Prod. Wood"; overlay_font_size: root.timer_font_size; width: root.timer_prod_wood_width; horizontal-alignment: right; }
+                CompactLabel { text: "Prod. Weap"; overlay_font_size: root.timer_font_size; width: root.timer_prod_weapons_width; horizontal-alignment: right; }
+            }
+
+            HorizontalLayout {
+                height: max(28px, root.timer_font_size * 1.7px);
+                spacing: 10px;
+                CompactValue { text: root.ticks_text; overlay_font_size: root.timer_font_size; width: root.timer_ticks_width; }
+                CompactValue { text: root.day_text; overlay_font_size: root.timer_font_size; width: root.timer_day_width; }
+                CompactValue { text: root.month_text; overlay_font_size: root.timer_font_size; width: root.timer_month_width; }
+                CompactValue { text: root.year_text; overlay_font_size: root.timer_font_size; width: root.timer_year_width; }
+                CompactValue { text: root.elapsed_text; overlay_font_size: root.timer_font_size; width: root.timer_time_width; }
+                CompactValue { text: root.game_speed_text; overlay_font_size: root.timer_font_size; width: root.timer_gs_width; }
+                CompactValue { text: root.acquired_gold_text; overlay_font_size: root.timer_font_size; width: root.timer_acq_gold_width; }
+                CompactValue { text: root.produced_food_text; overlay_font_size: root.timer_font_size; width: root.timer_prod_food_width; }
+                CompactValue { text: root.produced_stone_text; overlay_font_size: root.timer_font_size; width: root.timer_prod_stone_width; }
+                CompactValue { text: root.produced_iron_text; overlay_font_size: root.timer_font_size; width: root.timer_prod_iron_width; }
+                CompactValue { text: root.produced_wood_text; overlay_font_size: root.timer_font_size; width: root.timer_prod_wood_width; }
+                CompactValue { text: root.produced_weapons_text; overlay_font_size: root.timer_font_size; width: root.timer_prod_weapons_width; }
+            }
+        }
+    }
+}
+
+export component AdminWindow inherits Window {
+    in property <float> panel_opacity: 0.78;
+    in property <float> admin_font_size: 16;
+    in property <bool> admin_frame: true;
+    in property <bool> pin_on_top: false;
+    in property <string> game_player_text: "P1";
+    in property <string> selected_player_text: "P1";
+    in property <string> gold_text: "0";
+    in property <string> population_text: "0";
+    in property <string> army_text: "0";
+    in property <string> ff_text: "0";
+    in property <string> acquired_gold_text: "0";
+    in property <string> produced_food_text: "0";
+    in property <string> produced_stone_text: "0";
+    in property <string> produced_iron_text: "0";
+    in property <string> produced_wood_text: "0";
+    in property <string> produced_weapons_text: "0";
+    private property <float> admin_width_scale: max(1, root.admin_font_size / 12);
+    private property <length> admin_small_width: 48px * root.admin_width_scale;
+    private property <length> admin_mid_width: 66px * root.admin_width_scale;
+    private property <length> admin_big_width: 76px * root.admin_width_scale;
+
+    callback hide_admin();
+    callback request_admin_frame(bool);
+    callback request_admin_player(int);
+
+    title: "SHC:DE Admin";
+    icon: @image-url("../assets/icon.png");
+    always-on-top: root.pin_on_top;
+    no-frame: !root.admin_frame;
+    background: transparent;
+    width: max(780px, root.admin_small_width * 4 + root.admin_mid_width + root.admin_big_width * 6 + 156px);
+    height: max(95px, root.admin_font_size * 6.8px);
+
+    Rectangle {
+        background: transparent;
+
+        Rectangle {
+            x: 0px;
+            y: 0px;
+            width: parent.width;
+            height: parent.height;
+            border-radius: 8px;
+            background: rgba(13, 18, 27, root.panel_opacity);
+            border-color: rgba(255, 255, 255, 0.14);
+            border-width: 1px;
+        }
+
+        VerticalLayout {
+            padding: 8px;
+            spacing: 6px;
+
+            HorizontalLayout {
+                height: max(26px, root.admin_font_size * 1.3px);
+                spacing: 6px;
+
+                Text {
+                    text: "Admin panel";
+                    color: #f8fafc;
+                    font-size: root.admin_font_size * 1px;
+                    font-weight: 800;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+
+                Text {
+                    text: "Game " + root.game_player_text;
+                    color: #cbd5e1;
+                    font-size: 12px;
+                    font-weight: 800;
+                    width: 76px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                Button {
+                    text: "<";
+                    width: 32px;
+                    height: 24px;
+                    clicked => { root.request_admin_player(-1); }
+                }
+
+                Text {
+                    text: root.selected_player_text;
+                    color: #ffffff;
+                    font-size: 12px;
+                    font-weight: 800;
+                    width: 48px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                Button {
+                    text: ">";
+                    width: 32px;
+                    height: 24px;
+                    clicked => { root.request_admin_player(1); }
+                }
+
+                Button {
+                    text: "Hide";
+                    width: 54px;
+                    height: 24px;
+                    clicked => { root.hide_admin(); }
+                }
+
+                Button {
+                    text: root.admin_frame ? "Frame on" : "Frame off";
+                    width: 82px;
+                    height: 24px;
+                    clicked => { root.request_admin_frame(!root.admin_frame); }
+                }
+            }
+
+            HorizontalLayout {
+                height: max(18px, root.admin_font_size * 1.1px);
+                spacing: 10px;
+                CompactLabel { text: "Gold"; overlay_font_size: root.admin_font_size; width: root.admin_mid_width; horizontal-alignment: right; }
+                CompactLabel { text: "Pop"; overlay_font_size: root.admin_font_size; width: root.admin_small_width; horizontal-alignment: right; }
+                CompactLabel { text: "Army"; overlay_font_size: root.admin_font_size; width: root.admin_small_width; horizontal-alignment: right; }
+                CompactLabel { text: "FF"; overlay_font_size: root.admin_font_size; width: root.admin_small_width; horizontal-alignment: right; }
+                CompactLabel { text: "Acq. Gold"; overlay_font_size: root.admin_font_size; width: root.admin_big_width; horizontal-alignment: right; }
+                CompactLabel { text: "Prod. Food"; overlay_font_size: root.admin_font_size; width: root.admin_big_width; horizontal-alignment: right; }
+                CompactLabel { text: "Prod. Stone"; overlay_font_size: root.admin_font_size; width: root.admin_big_width; horizontal-alignment: right; }
+                CompactLabel { text: "Prod. Iron"; overlay_font_size: root.admin_font_size; width: root.admin_big_width; horizontal-alignment: right; }
+                CompactLabel { text: "Prod. Wood"; overlay_font_size: root.admin_font_size; width: root.admin_big_width; horizontal-alignment: right; }
+                CompactLabel { text: "Prod. Weap"; overlay_font_size: root.admin_font_size; width: root.admin_big_width; horizontal-alignment: right; }
+            }
+
+            HorizontalLayout {
+                height: max(28px, root.admin_font_size * 1.7px);
+                spacing: 10px;
+                CompactValue { text: root.gold_text; overlay_font_size: root.admin_font_size; width: root.admin_mid_width; }
+                CompactValue { text: root.population_text; overlay_font_size: root.admin_font_size; width: root.admin_small_width; }
+                CompactValue { text: root.army_text; overlay_font_size: root.admin_font_size; width: root.admin_small_width; }
+                CompactValue { text: root.ff_text; overlay_font_size: root.admin_font_size; width: root.admin_small_width; }
+                CompactValue { text: root.acquired_gold_text; overlay_font_size: root.admin_font_size; width: root.admin_big_width; }
+                CompactValue { text: root.produced_food_text; overlay_font_size: root.admin_font_size; width: root.admin_big_width; }
+                CompactValue { text: root.produced_stone_text; overlay_font_size: root.admin_font_size; width: root.admin_big_width; }
+                CompactValue { text: root.produced_iron_text; overlay_font_size: root.admin_font_size; width: root.admin_big_width; }
+                CompactValue { text: root.produced_wood_text; overlay_font_size: root.admin_font_size; width: root.admin_big_width; }
+                CompactValue { text: root.produced_weapons_text; overlay_font_size: root.admin_font_size; width: root.admin_big_width; }
+            }
+        }
+    }
+}

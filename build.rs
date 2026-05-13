@@ -1,0 +1,293 @@
+fn main() {
+    println!("cargo:rerun-if-changed=ui/app.slint");
+    println!("cargo:rerun-if-changed=assets/icon.png");
+    println!("cargo:rerun-if-changed=.user");
+    println!("cargo:rerun-if-changed=.memory");
+    println!("cargo:rerun-if-env-changed=SHCDE_OBFUSCATION_KEY");
+
+    generate_private_build_files().expect("failed to generate private build files");
+    slint_build::compile("ui/app.slint").expect("failed to compile Slint UI");
+
+    #[cfg(windows)]
+    embed_windows_icon().expect("failed to embed Windows icon");
+}
+
+fn generate_private_build_files() -> Result<(), Box<dyn std::error::Error>> {
+    use std::env;
+    use std::fs;
+    use std::path::PathBuf;
+
+    let key = external_obfuscation_key()
+        .ok_or("build requires SHCDE_OBFUSCATION_KEY or .user obfuscation_key")?;
+    let memory = MemorySpec::load(".memory")?;
+
+    let out_dir = PathBuf::from(env::var("OUT_DIR")?);
+    fs::write(
+        out_dir.join("obfuscation_key.rs"),
+        format!(
+            "pub const ADDRESS_KEY: usize = {key};\npub const ADDRESS_KEY_ISIZE: isize = ADDRESS_KEY as isize;\n"
+        ),
+    )?;
+    fs::write(out_dir.join("addresses.rs"), memory.to_rust(key)?)?;
+
+    Ok(())
+}
+
+fn external_obfuscation_key() -> Option<usize> {
+    std::env::var("SHCDE_OBFUSCATION_KEY")
+        .ok()
+        .and_then(|value| parse_key(&value))
+        .or_else(|| key_from_user_file())
+}
+
+fn key_from_user_file() -> Option<usize> {
+    let text = std::fs::read_to_string(".user").ok()?;
+    text.lines().find_map(|line| {
+        let (name, value) = line.split_once(':')?;
+        matches!(name.trim(), "obfuscation_key" | "hardcoded_key")
+            .then(|| parse_key(value))
+            .flatten()
+    })
+}
+
+fn parse_key(value: &str) -> Option<usize> {
+    let value = value.trim();
+    if let Some(hex) = value
+        .strip_prefix("0x")
+        .or_else(|| value.strip_prefix("0X"))
+    {
+        usize::from_str_radix(hex, 16).ok()
+    } else {
+        value.parse().ok()
+    }
+}
+
+#[derive(Clone, Copy)]
+enum MemoryValueKind {
+    Usize,
+    Isize,
+}
+
+struct MemoryEntry {
+    name: String,
+    value: i128,
+}
+
+struct MemorySection {
+    name: Option<String>,
+    kind: MemoryValueKind,
+    entries: Vec<MemoryEntry>,
+}
+
+struct MemorySpec {
+    module_name: String,
+    sections: Vec<MemorySection>,
+}
+
+impl MemorySpec {
+    fn load(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let text = std::fs::read_to_string(path)
+            .map_err(|error| format!("failed to read {path}: {error}"))?;
+
+        let mut module_name = None;
+        let mut sections = vec![MemorySection {
+            name: None,
+            kind: MemoryValueKind::Usize,
+            entries: Vec::new(),
+        }];
+        let mut current_section = 0usize;
+
+        for (line_index, raw_line) in text.lines().enumerate() {
+            let line_number = line_index + 1;
+            let line = raw_line
+                .split_once('#')
+                .map(|(line, _)| line)
+                .unwrap_or(raw_line)
+                .trim();
+
+            if line.is_empty() {
+                continue;
+            }
+
+            if let Some(section) = line.strip_prefix('[').and_then(|line| line.strip_suffix(']')) {
+                let (name, kind) = section
+                    .split_once(':')
+                    .ok_or_else(|| format!("{path}:{line_number}: section must be [name:usize] or [name:isize]"))?;
+                let kind = parse_memory_kind(kind)
+                    .ok_or_else(|| format!("{path}:{line_number}: unknown value kind `{kind}`"))?;
+                sections.push(MemorySection {
+                    name: Some(name.trim().to_string()),
+                    kind,
+                    entries: Vec::new(),
+                });
+                current_section = sections.len() - 1;
+                continue;
+            }
+
+            let (name, value) = line
+                .split_once('=')
+                .ok_or_else(|| format!("{path}:{line_number}: expected NAME = VALUE"))?;
+            let name = name.trim();
+            let value = value.trim();
+
+            if name == "MODULE_NAME" {
+                module_name = Some(parse_string(value).ok_or_else(|| {
+                    format!("{path}:{line_number}: MODULE_NAME must be a quoted string")
+                })?);
+                continue;
+            }
+
+            sections[current_section].entries.push(MemoryEntry {
+                name: name.to_string(),
+                value: parse_memory_int(value).ok_or_else(|| {
+                    format!("{path}:{line_number}: failed to parse integer `{value}`")
+                })?,
+            });
+        }
+
+        Ok(Self {
+            module_name: module_name.ok_or("build requires .memory MODULE_NAME")?,
+            sections,
+        })
+    }
+
+    fn to_rust(&self, key: usize) -> Result<String, Box<dyn std::error::Error>> {
+        let mut output = String::new();
+        output.push_str("// Generated by build.rs from local .memory. Do not edit.\n\n");
+        output.push_str(&format!("pub const MODULE_NAME: &str = {:?};\n\n", self.module_name));
+
+        for section in &self.sections {
+            if let Some(name) = &section.name {
+                output.push_str(&format!("pub mod {name} {{\n"));
+                for entry in &section.entries {
+                    output.push_str("    ");
+                    output.push_str(&rust_const_line(entry, section.kind, key)?);
+                }
+
+                if name == "player_offsets" {
+                    output.push('\n');
+                    output.push_str("    #[deprecated(note = \"use POPULATION_TOTAL for UI-facing population\")]\n");
+                    output.push_str("    pub const CIVILIANS_TOTAL: isize = POPULATION_TOTAL;\n");
+                    output.push_str("    #[deprecated(note = \"use POPULATION_ON_BONFIRE\")]\n");
+                    output.push_str("    pub const BONFIRE_FREE_PEASANT_CAP: isize = POPULATION_ON_BONFIRE;\n");
+                }
+
+                output.push_str("}\n\n");
+            } else {
+                for entry in &section.entries {
+                    output.push_str(&rust_const_line(entry, section.kind, key)?);
+                }
+                output.push('\n');
+            }
+        }
+
+        Ok(output)
+    }
+}
+
+fn parse_memory_kind(value: &str) -> Option<MemoryValueKind> {
+    match value.trim() {
+        "usize" => Some(MemoryValueKind::Usize),
+        "isize" => Some(MemoryValueKind::Isize),
+        _ => None,
+    }
+}
+
+fn parse_string(value: &str) -> Option<String> {
+    value
+        .trim()
+        .strip_prefix('"')?
+        .strip_suffix('"')
+        .map(str::to_string)
+}
+
+fn parse_memory_int(value: &str) -> Option<i128> {
+    let value = value.trim().replace('_', "");
+    let (sign, digits) = value.strip_prefix('-').map_or((1i128, value.as_str()), |digits| {
+        (-1, digits)
+    });
+
+    if let Some(hex) = digits
+        .strip_prefix("0x")
+        .or_else(|| digits.strip_prefix("0X"))
+    {
+        i128::from_str_radix(hex, 16).ok().map(|value| value * sign)
+    } else {
+        digits.parse::<i128>().ok().map(|value| value * sign)
+    }
+}
+
+fn rust_const_line(
+    entry: &MemoryEntry,
+    kind: MemoryValueKind,
+    key: usize,
+) -> Result<String, Box<dyn std::error::Error>> {
+    match kind {
+        MemoryValueKind::Usize => {
+            let value = usize::try_from(entry.value)
+                .map_err(|_| format!("{} must be a non-negative usize", entry.name))?;
+            let encoded = value ^ key;
+            Ok(format!(
+                "pub const {}: usize = crate::obfuscation::decode_usize({});\n",
+                entry.name,
+                format_usize_hex(encoded)
+            ))
+        }
+        MemoryValueKind::Isize => {
+            let value = isize::try_from(entry.value)
+                .map_err(|_| format!("{} does not fit in isize", entry.name))?;
+            let encoded = value ^ (key as isize);
+            Ok(format!(
+                "pub const {}: isize = crate::obfuscation::decode_isize({});\n",
+                entry.name,
+                format_isize_hex(encoded)
+            ))
+        }
+    }
+}
+
+fn format_usize_hex(value: usize) -> String {
+    format!("0x{value:X}")
+}
+
+fn format_isize_hex(value: isize) -> String {
+    if value < 0 {
+        format!("-0x{:X}", -value)
+    } else {
+        format!("0x{value:X}")
+    }
+}
+
+#[cfg(windows)]
+fn embed_windows_icon() -> Result<(), Box<dyn std::error::Error>> {
+    use image::imageops::FilterType;
+    use std::env;
+    use std::fs::File;
+    use std::path::PathBuf;
+
+    let source = image::open("assets/icon.png")?;
+    let out_dir = PathBuf::from(env::var("OUT_DIR")?);
+    let icon_path = out_dir.join("shcde-monitor.ico");
+
+    let mut icon_dir = ico::IconDir::new(ico::ResourceType::Icon);
+    for size in [16, 24, 32, 48, 64, 128, 256] {
+        let rgba = source
+            .resize_exact(size, size, FilterType::Lanczos3)
+            .into_rgba8();
+        let icon_image = ico::IconImage::from_rgba_data(size, size, rgba.into_raw());
+        icon_dir.add_entry(ico::IconDirEntry::encode(&icon_image)?);
+    }
+
+    let mut icon_file = File::create(&icon_path)?;
+    icon_dir.write(&mut icon_file)?;
+
+    let mut resource = winresource::WindowsResource::new();
+    resource.set_icon(
+        icon_path
+            .to_str()
+            .ok_or("generated icon path is not valid UTF-8")?,
+    );
+    resource.compile()?;
+
+    Ok(())
+}
