@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use super::addresses::UI_PLAYER_ID;
+use super::addresses::{SCENARIO_MODE, UI_PLAYER_ID};
 use super::building::{BuildingSnapshot, BuildingTableReader};
 use super::game::{GameManagerReader, GameManagerSnapshot, PostGameStatisticsSnapshot};
 use super::memory::MemoryWrite;
@@ -53,6 +53,15 @@ impl LiveStatsSource {
         self.heavy_refresh_interval_ms = interval_ms.clamp(100, 2_000);
     }
 
+    pub fn reattach(&mut self) {
+        self.process = None;
+        self.last_error = None;
+        self.last_heavy_refresh = None;
+        self.cached_units.clear();
+        self.cached_buildings.clear();
+        self.cached_post_game_statistics = PostGameStatisticsSnapshot::default();
+    }
+
     pub fn snapshot(&mut self) -> GameSnapshot {
         match self.read_snapshot() {
             Ok(snapshot) => {
@@ -89,6 +98,18 @@ impl LiveStatsSource {
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("process attach did not produce a handle"))?;
         process.write_u32(process.module_addr(UI_PLAYER_ID), player_id.clamp(1, 8))
+    }
+
+    pub fn write_scenario_mode(&mut self, enabled: bool) -> anyhow::Result<()> {
+        if self.process.is_none() {
+            self.process = Some(attach_to_known_game_process()?);
+        }
+
+        let process = self
+            .process
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("process attach did not produce a handle"))?;
+        process.write_u32(process.module_addr(SCENARIO_MODE), u32::from(enabled))
     }
 
     fn read_snapshot(&mut self) -> anyhow::Result<GameSnapshot> {

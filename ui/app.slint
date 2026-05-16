@@ -832,6 +832,7 @@ export component AppWindow inherits Window {
     callback cycle_player_color(int);
     callback submit_admin_key(string);
     callback request_admin_ui_player(int);
+    callback reattach_game();
 
     title: "Stronghold Crusader DE, Monitor";
     icon: @image-url("../assets/icon.png");
@@ -921,6 +922,14 @@ export component AppWindow inherits Window {
                             CheckBox {
                                 text: "Always on top";
                                 checked <=> root.pin_on_top;
+                            }
+
+                            Button {
+                                text: "Reattach";
+                                width: 84px;
+                                clicked => {
+                                    root.reattach_game();
+                                }
                             }
 
                             FieldLabel {
@@ -1497,6 +1506,7 @@ export component TimerWindow inherits Window {
     in property <string> elapsed_text: "00:00";
     in property <string> game_speed_text: "50";
     in property <string> timer_player_text: "P1";
+    in property <bool> scenario_mode: false;
     in property <string> acquired_gold_text: "0";
     in property <string> produced_food_text: "0";
     in property <string> produced_stone_text: "0";
@@ -1520,6 +1530,7 @@ export component TimerWindow inherits Window {
     callback hide_timer();
     callback request_timer_frame(bool);
     callback request_timer_player(int);
+    callback request_scenario_mode(bool);
 
     title: "Game ticks timer";
     icon: @image-url("../assets/icon.png");
@@ -1582,6 +1593,30 @@ export component TimerWindow inherits Window {
                     width: 32px;
                     height: 24px;
                     clicked => { root.request_timer_player(1); }
+                }
+
+                Rectangle {
+                    width: 82px;
+                    height: 24px;
+                    border-radius: 4px;
+                    border-width: 1px;
+                    border-color: root.scenario_mode ? #0b65c9 : rgba(255, 255, 255, 0.20);
+                    background: root.scenario_mode ? #0b65c9 : rgba(255, 255, 255, 0.08);
+
+                    Text {
+                        text: "Scenario";
+                        color: #ffffff;
+                        font-size: 11px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+
+                    TouchArea {
+                        clicked => {
+                            root.request_scenario_mode(!root.scenario_mode);
+                        }
+                    }
                 }
 
                 Button {

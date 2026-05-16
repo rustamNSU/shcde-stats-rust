@@ -229,6 +229,21 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
+    app.on_reattach_game({
+        let app = app.as_weak();
+        let source = source.clone();
+        move || {
+            let Some(app) = app.upgrade() else {
+                return;
+            };
+
+            let mut source = source.borrow_mut();
+            source.reattach();
+            let _ = source.snapshot();
+            app.set_process_status(source.status_text().into());
+        }
+    });
+
     overlay.on_hide_overlay({
         let app = app.as_weak();
         let overlay = overlay.as_weak();
@@ -294,6 +309,31 @@ fn main() -> Result<(), slint::PlatformError> {
 
             let next_player_id = (app.get_timer_player_id() + delta).clamp(1, 8);
             app.set_timer_player_id(next_player_id);
+        }
+    });
+
+    timer_window.on_request_scenario_mode({
+        let app = app.as_weak();
+        let source = source.clone();
+        move |enabled| {
+            let Some(app) = app.upgrade() else {
+                return;
+            };
+
+            match source.borrow_mut().write_scenario_mode(enabled) {
+                Ok(()) => {
+                    app.set_process_status(
+                        format!(
+                            "Scenario mode {}.",
+                            if enabled { "enabled" } else { "disabled" }
+                        )
+                        .into(),
+                    );
+                }
+                Err(err) => {
+                    app.set_process_status(format!("Scenario mode write failed: {err:#}").into());
+                }
+            }
         }
     });
 
@@ -897,6 +937,7 @@ fn sync_timer_settings(app: &AppWindow, timer_window: &TimerWindow, snapshot: &G
     timer_window.set_year_text(game.year.to_string().into());
     timer_window.set_elapsed_text(elapsed_time_text(game.ticks, game_speed).into());
     timer_window.set_game_speed_text(format!("{game_speed:.0}").into());
+    timer_window.set_scenario_mode(game.scenario_mode != 0);
 
     let player_id = app.get_timer_player_id().clamp(1, 8) as u32;
     if app.get_timer_player_id() != player_id as i32 {

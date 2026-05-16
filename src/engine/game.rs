@@ -5,7 +5,7 @@ use super::addresses::{
     GAME_MANAGER_BASE, KILL_MATRIX_BASE_OFFSET, KILL_MATRIX_COLUMNS, KILL_MATRIX_COLUMN_STRIDE,
     KILL_MATRIX_ROW_STRIDE, LAST_SELECTED_EXTREME_POWER, MAX_PLAYERS, MONTH_FIELD,
     MONTH_PART_FIELD, MONTH_UNTIL_DEFEAT, PLACEMENT_STATE_EVEN, PLACEMENT_TYPE, PLACEMENT_X,
-    PLACEMENT_Y, SANDS_TIMER, SELECTED_EXTREME_POWER_UI_FLAG, STATS_CURRENT_MONTH,
+    PLACEMENT_Y, SANDS_TIMER, SCENARIO_MODE, SELECTED_EXTREME_POWER_UI_FLAG, STATS_CURRENT_MONTH,
     STATS_CURRENT_YEAR, STATS_START_MONTH, STATS_START_YEAR, TICKS_FIELD, UI_PLAYER_ID, YEAR_FIELD,
 };
 use super::memory::MemoryRead;
@@ -13,6 +13,7 @@ use super::memory::MemoryRead;
 #[derive(Debug, Clone, Default)]
 pub struct GameManagerSnapshot {
     pub sands_timer: u32,
+    pub scenario_mode: u32,
     pub month_part: u32,
     pub month: u32,
     pub month_until_defeat: u32,
@@ -86,6 +87,7 @@ impl<'a, R: MemoryRead> GameManagerReader<'a, R> {
 
         Ok(GameManagerSnapshot {
             sands_timer: self.read_absolute(SANDS_TIMER)?,
+            scenario_mode: self.read_absolute(SCENARIO_MODE)?,
             month_part: self.memory.read_u32(manager_base + MONTH_PART_FIELD)?,
             month: self.memory.read_u32(manager_base + MONTH_FIELD)?,
             month_until_defeat: self.read_absolute(MONTH_UNTIL_DEFEAT)?,
