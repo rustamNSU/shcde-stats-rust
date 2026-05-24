@@ -781,6 +781,7 @@ export component AppWindow inherits Window {
     in-out property <float> heavy_refresh_interval_ms: 200;
     in-out property <bool> overlay_frame: true;
     in-out property <bool> timer_frame: true;
+    in-out property <bool> timer_show_buildings: false;
     in-out property <bool> pin_on_top: true;
     in-out property <bool> admin_mode: false;
     in-out property <string> admin_key_input: "";
@@ -1210,6 +1211,14 @@ export component AppWindow inherits Window {
                                     }
                                 }
                             }
+                            HorizontalLayout {
+                                height: 28px;
+                                spacing: 8px;
+                                StatToggle {
+                                    text: "Buildings";
+                                    checked <=> root.timer_show_buildings;
+                                }
+                            }
                             SettingsRow {
                                 label: "Font size";
                                 Slider {
@@ -1513,6 +1522,14 @@ export component TimerWindow inherits Window {
     in property <string> produced_iron_text: "0";
     in property <string> produced_wood_text: "0";
     in property <string> produced_weapons_text: "0";
+    in property <bool> show_buildings: false;
+    in property <int> fletchers_count: 0;
+    in property <int> poleturners_count: 0;
+    in property <int> armourers_count: 0;
+    in property <int> blacksmiths_count: 0;
+    in property <int> bakers_count: 0;
+    in property <int> mills_count: 0;
+    in property <int> woodcutters_count: 0;
     private property <float> timer_width_scale: max(1, root.timer_font_size / 12);
     private property <length> timer_ticks_width: 78px * root.timer_width_scale;
     private property <length> timer_day_width: 25px * root.timer_width_scale;
@@ -1526,6 +1543,8 @@ export component TimerWindow inherits Window {
     private property <length> timer_prod_iron_width: 50px * root.timer_width_scale;
     private property <length> timer_prod_wood_width: 50px * root.timer_width_scale;
     private property <length> timer_prod_weapons_width: 50px * root.timer_width_scale;
+    private property <length> timer_building_width: 50px * root.timer_width_scale;
+    private property <length> timer_buildings_width: root.show_buildings ? (root.timer_building_width * 7 + 70px) : 0px;
 
     callback hide_timer();
     callback request_timer_frame(bool);
@@ -1537,7 +1556,7 @@ export component TimerWindow inherits Window {
     always-on-top: root.pin_on_top;
     no-frame: !root.timer_frame;
     background: transparent;
-    width: max(520px, root.timer_ticks_width + root.timer_day_width + root.timer_month_width + root.timer_year_width + root.timer_time_width + root.timer_gs_width + root.timer_acq_gold_width + root.timer_prod_food_width + root.timer_prod_stone_width + root.timer_prod_iron_width + root.timer_prod_wood_width + root.timer_prod_weapons_width + 150px);
+    width: max(520px, root.timer_ticks_width + root.timer_day_width + root.timer_month_width + root.timer_year_width + root.timer_time_width + root.timer_gs_width + root.timer_acq_gold_width + root.timer_prod_food_width + root.timer_prod_stone_width + root.timer_prod_iron_width + root.timer_prod_wood_width + root.timer_prod_weapons_width + root.timer_buildings_width + 150px);
     height: max(95px, root.timer_font_size * 6.8px);
 
     Rectangle {
@@ -1649,6 +1668,13 @@ export component TimerWindow inherits Window {
                 CompactLabel { text: "Prod. Iron"; overlay_font_size: root.timer_font_size; width: root.timer_prod_iron_width; horizontal-alignment: right; }
                 CompactLabel { text: "Prod. Wood"; overlay_font_size: root.timer_font_size; width: root.timer_prod_wood_width; horizontal-alignment: right; }
                 CompactLabel { text: "Prod. Weap"; overlay_font_size: root.timer_font_size; width: root.timer_prod_weapons_width; horizontal-alignment: right; }
+                if root.show_buildings: CompactLabel { text: "Fletch"; overlay_font_size: root.timer_font_size; width: root.timer_building_width; horizontal-alignment: right; }
+                if root.show_buildings: CompactLabel { text: "Pole"; overlay_font_size: root.timer_font_size; width: root.timer_building_width; horizontal-alignment: right; }
+                if root.show_buildings: CompactLabel { text: "Armour"; overlay_font_size: root.timer_font_size; width: root.timer_building_width; horizontal-alignment: right; }
+                if root.show_buildings: CompactLabel { text: "Smith"; overlay_font_size: root.timer_font_size; width: root.timer_building_width; horizontal-alignment: right; }
+                if root.show_buildings: CompactLabel { text: "Baker"; overlay_font_size: root.timer_font_size; width: root.timer_building_width; horizontal-alignment: right; }
+                if root.show_buildings: CompactLabel { text: "Mill"; overlay_font_size: root.timer_font_size; width: root.timer_building_width; horizontal-alignment: right; }
+                if root.show_buildings: CompactLabel { text: "Wood"; overlay_font_size: root.timer_font_size; width: root.timer_building_width; horizontal-alignment: right; }
             }
 
             HorizontalLayout {
@@ -1666,6 +1692,13 @@ export component TimerWindow inherits Window {
                 CompactValue { text: root.produced_iron_text; overlay_font_size: root.timer_font_size; width: root.timer_prod_iron_width; }
                 CompactValue { text: root.produced_wood_text; overlay_font_size: root.timer_font_size; width: root.timer_prod_wood_width; }
                 CompactValue { text: root.produced_weapons_text; overlay_font_size: root.timer_font_size; width: root.timer_prod_weapons_width; }
+                if root.show_buildings: CompactValue { text: root.fletchers_count; overlay_font_size: root.timer_font_size; width: root.timer_building_width; }
+                if root.show_buildings: CompactValue { text: root.poleturners_count; overlay_font_size: root.timer_font_size; width: root.timer_building_width; }
+                if root.show_buildings: CompactValue { text: root.armourers_count; overlay_font_size: root.timer_font_size; width: root.timer_building_width; }
+                if root.show_buildings: CompactValue { text: root.blacksmiths_count; overlay_font_size: root.timer_font_size; width: root.timer_building_width; }
+                if root.show_buildings: CompactValue { text: root.bakers_count; overlay_font_size: root.timer_font_size; width: root.timer_building_width; }
+                if root.show_buildings: CompactValue { text: root.mills_count; overlay_font_size: root.timer_font_size; width: root.timer_building_width; }
+                if root.show_buildings: CompactValue { text: root.woodcutters_count; overlay_font_size: root.timer_font_size; width: root.timer_building_width; }
             }
         }
     }

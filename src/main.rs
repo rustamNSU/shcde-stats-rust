@@ -10,6 +10,7 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use config::{AppConfig, ColumnVisibility, SavedWindowPosition, ShooterTypeVisibility};
+use engine::building::timer_building_counts;
 use engine::service::LiveStatsSource;
 use engine::snapshot::{overlay_rows, GameSnapshot};
 use obfuscation::{admin_password_config_value, admin_password_is_valid};
@@ -500,6 +501,7 @@ fn apply_config(app: &AppWindow, config: &AppConfig) {
     app.set_timer_font_size(config.timer.font_size);
     app.set_game_speed(quantized_game_speed(config.timer.game_speed));
     app.set_timer_frame(config.timer.movable_frame);
+    app.set_timer_show_buildings(config.timer.show_buildings);
 
     apply_column_config(app, &config.columns);
     apply_shooter_config(app, &config.shooter_types);
@@ -604,6 +606,7 @@ fn collect_config(
             font_size: app.get_timer_font_size(),
             game_speed: quantized_game_speed(app.get_game_speed()),
             movable_frame: app.get_timer_frame(),
+            show_buildings: app.get_timer_show_buildings(),
         },
         columns: ColumnVisibility {
             gold: app.get_show_gold(),
@@ -993,6 +996,15 @@ fn sync_timer_settings(app: &AppWindow, timer_window: &TimerWindow, snapshot: &G
             .to_string()
             .into(),
     );
+
+    let building_counts = timer_building_counts(&snapshot.buildings, player_id as u16);
+    timer_window.set_fletchers_count(building_counts.fletchers as i32);
+    timer_window.set_poleturners_count(building_counts.poleturners as i32);
+    timer_window.set_armourers_count(building_counts.armourers as i32);
+    timer_window.set_blacksmiths_count(building_counts.blacksmiths as i32);
+    timer_window.set_bakers_count(building_counts.bakers as i32);
+    timer_window.set_mills_count(building_counts.mills as i32);
+    timer_window.set_woodcutters_count(building_counts.woodcutters as i32);
 }
 
 fn sync_timer_panel_settings(app: &AppWindow, timer_window: &TimerWindow) {
@@ -1005,6 +1017,7 @@ fn sync_timer_panel_settings(app: &AppWindow, timer_window: &TimerWindow) {
     timer_window.set_timer_font_size(app.get_timer_font_size());
     timer_window.set_timer_frame(app.get_timer_frame());
     timer_window.set_pin_on_top(app.get_pin_on_top());
+    timer_window.set_show_buildings(app.get_timer_show_buildings());
 }
 
 fn quantized_game_speed(value: f32) -> f32 {

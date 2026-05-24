@@ -88,6 +88,17 @@ pub struct PlayerBuildingStats {
     pub buildings_by_type: HashMap<u16, usize>,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct TimerBuildingCounts {
+    pub fletchers: usize,
+    pub poleturners: usize,
+    pub armourers: usize,
+    pub blacksmiths: usize,
+    pub bakers: usize,
+    pub mills: usize,
+    pub woodcutters: usize,
+}
+
 pub fn aggregate_buildings(buildings: &[BuildingSnapshot]) -> HashMap<u16, PlayerBuildingStats> {
     let mut stats = HashMap::new();
 
@@ -117,4 +128,29 @@ pub fn workshop_count(stats: &PlayerBuildingStats) -> usize {
     .into_iter()
     .map(|type_id| stats.buildings_by_type.get(&type_id).copied().unwrap_or(0))
     .sum()
+}
+
+pub fn timer_building_counts(
+    buildings: &[BuildingSnapshot],
+    player_id: u16,
+) -> TimerBuildingCounts {
+    let mut counts = TimerBuildingCounts::default();
+
+    for building in buildings
+        .iter()
+        .filter(|building| building.is_valid() && building.owner_player_id == player_id)
+    {
+        match building.type_id {
+            building_type::FLETCHERS_WORKSHOP => counts.fletchers += 1,
+            building_type::POLETURNERS_WORKSHOP => counts.poleturners += 1,
+            building_type::ARMOURERS_WORKSHOP => counts.armourers += 1,
+            building_type::BLACKSMITHS_WORKSHOP => counts.blacksmiths += 1,
+            building_type::BAKERS_WORKSHOP => counts.bakers += 1,
+            building_type::MILL => counts.mills += 1,
+            building_type::WOODCUTTERS_HUT => counts.woodcutters += 1,
+            _ => {}
+        }
+    }
+
+    counts
 }

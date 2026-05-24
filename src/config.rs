@@ -184,6 +184,7 @@ pub struct TimerSettings {
     pub game_speed: f32,
     #[serde(default = "default_true")]
     pub movable_frame: bool,
+    pub show_buildings: bool,
 }
 
 impl Default for TimerSettings {
@@ -193,6 +194,7 @@ impl Default for TimerSettings {
             font_size: default_font_size(),
             game_speed: default_game_speed(),
             movable_frame: default_true(),
+            show_buildings: false,
         }
     }
 }
