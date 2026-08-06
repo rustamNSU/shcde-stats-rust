@@ -1,12 +1,11 @@
 use anyhow::Result;
 
 use super::addresses::{
-    post_game_offsets, BUILD_ANYWHERE, EXTREME_POWER_BAR_ANY_MODE, EXTREME_POWER_BAR_PLAYER1,
-    GAME_MANAGER_BASE, KILL_MATRIX_BASE_OFFSET, KILL_MATRIX_COLUMNS, KILL_MATRIX_COLUMN_STRIDE,
-    KILL_MATRIX_ROW_STRIDE, LAST_SELECTED_EXTREME_POWER, MAX_PLAYERS, MONTH_FIELD,
-    MONTH_PART_FIELD, MONTH_UNTIL_DEFEAT, PLACEMENT_STATE_EVEN, PLACEMENT_TYPE, PLACEMENT_X,
-    PLACEMENT_Y, SANDS_TIMER, SCENARIO_MODE, SELECTED_EXTREME_POWER_UI_FLAG, STATS_CURRENT_MONTH,
-    STATS_CURRENT_YEAR, STATS_START_MONTH, STATS_START_YEAR, TICKS_FIELD, UI_PLAYER_ID, YEAR_FIELD,
+    post_game_offsets, EXTREME_POWER_BAR_ANY_MODE, EXTREME_POWER_BAR_PLAYER1, GAME_MANAGER_BASE,
+    KILL_MATRIX_BASE_OFFSET, KILL_MATRIX_COLUMNS, KILL_MATRIX_COLUMN_STRIDE,
+    KILL_MATRIX_ROW_STRIDE, MAX_PLAYERS, MONTH_FIELD, MONTH_PART_FIELD, MONTH_UNTIL_DEFEAT,
+    SANDS_TIMER, SCENARIO_MODE, STATS_CURRENT_MONTH, STATS_CURRENT_YEAR, STATS_START_MONTH,
+    STATS_START_YEAR, TICKS_FIELD, UI_PLAYER_ID, YEAR_FIELD,
 };
 use super::memory::MemoryRead;
 
@@ -21,13 +20,6 @@ pub struct GameManagerSnapshot {
     pub ticks: u32,
     pub extreme_power_bar_player1: u32,
     pub extreme_power_bar_any_mode: u32,
-    pub build_anywhere: u32,
-    pub placement_state_even: u32,
-    pub placement_type: u32,
-    pub placement_x: u32,
-    pub placement_y: u32,
-    pub selected_extreme_power_ui_flag: u32,
-    pub last_selected_extreme_power: u32,
     pub ui_player_id: u32,
     pub stats_start_year: u32,
     pub stats_start_month: u32,
@@ -95,13 +87,6 @@ impl<'a, R: MemoryRead> GameManagerReader<'a, R> {
             ticks: self.memory.read_u32(manager_base + TICKS_FIELD)?,
             extreme_power_bar_player1: self.read_absolute(EXTREME_POWER_BAR_PLAYER1)?,
             extreme_power_bar_any_mode: self.read_absolute(EXTREME_POWER_BAR_ANY_MODE)?,
-            build_anywhere: self.read_absolute(BUILD_ANYWHERE)?,
-            placement_state_even: self.read_absolute(PLACEMENT_STATE_EVEN)?,
-            placement_type: self.read_absolute(PLACEMENT_TYPE)?,
-            placement_x: self.read_absolute(PLACEMENT_X)?,
-            placement_y: self.read_absolute(PLACEMENT_Y)?,
-            selected_extreme_power_ui_flag: self.read_absolute(SELECTED_EXTREME_POWER_UI_FLAG)?,
-            last_selected_extreme_power: self.read_absolute(LAST_SELECTED_EXTREME_POWER)?,
             ui_player_id: self.read_absolute(UI_PLAYER_ID)?,
             stats_start_year: self.read_absolute(STATS_START_YEAR)?,
             stats_start_month: self.read_absolute(STATS_START_MONTH)?,
