@@ -21,6 +21,7 @@ pub fn to_player_ui_rows(
     overlay_rows(snapshot)
         .into_iter()
         .map(|row| {
+            let popularity = displayed_popularity(row.popularity);
             let slot = row.player_id.saturating_sub(1) as usize;
             let name = player_names
                 .get(slot)
@@ -44,8 +45,8 @@ pub fn to_player_ui_rows(
                 food_ratio_text: signed_effect_text_3(row.food_ratio_effect).into(),
                 tax_text: signed_effect_text_3(row.tax_effect).into(),
                 total_effect_text: signed_effect_text_3(row.total_popularity_effect).into(),
-                popularity_text: unsigned_text_3(row.popularity).into(),
-                popularity: row.popularity,
+                popularity_text: unsigned_text_3(popularity).into(),
+                popularity,
                 population: row.population,
                 army: row.army,
                 buildings: row.buildings,
@@ -121,4 +122,31 @@ fn signed_effect_text_3(value: i32) -> String {
 
 fn unsigned_text_3(value: i32) -> String {
     value.clamp(0, 100).to_string()
+}
+
+fn displayed_popularity(raw: i32) -> i32 {
+    // The game stores popularity in hundredths of a point.
+    (raw.clamp(0, 10_000) + 50) / 100
+}
+
+#[cfg(test)]
+mod tests {
+    use super::displayed_popularity;
+
+    #[test]
+    fn popularity_rounds_to_game_display_scale() {
+        for (raw, expected) in [
+            (0, 0),
+            (49, 0),
+            (50, 1),
+            (7_549, 75),
+            (7_550, 76),
+            (9_999, 100),
+            (10_000, 100),
+            (-1, 0),
+            (i32::MAX, 100),
+        ] {
+            assert_eq!(displayed_popularity(raw), expected);
+        }
+    }
 }

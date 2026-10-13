@@ -131,24 +131,10 @@ component OverlayHeaderRow inherits Rectangle {
             width: max(120px, root.overlay_font_size * 7.5px);
         }
 
-        if root.show_gold: CompactLabel {
-            text: "Gold";
-            overlay_font_size: root.overlay_font_size;
-            width: max(68px, root.overlay_font_size * 4.4px);
-            horizontal-alignment: right;
-        }
-
         if root.show_population: CompactLabel {
             text: "Pop";
             overlay_font_size: root.overlay_font_size;
             width: max(82px, root.overlay_font_size * 5.2px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_army: CompactLabel {
-            text: "Army";
-            overlay_font_size: root.overlay_font_size;
-            width: max(52px, root.overlay_font_size * 3.4px);
             horizontal-alignment: right;
         }
 
@@ -166,10 +152,45 @@ component OverlayHeaderRow inherits Rectangle {
             horizontal-alignment: right;
         }
 
+        if root.show_ff: CompactLabel {
+            text: "FF";
+            overlay_font_size: root.overlay_font_size;
+            width: max(42px, root.overlay_font_size * 2.8px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_total_effect: CompactLabel {
+            text: "Popularity";
+            overlay_font_size: root.overlay_font_size;
+            width: max(80px, root.overlay_font_size * 6.0px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_gold: CompactLabel {
+            text: "Gold";
+            overlay_font_size: root.overlay_font_size;
+            width: max(68px, root.overlay_font_size * 4.4px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_acq_gold: CompactLabel {
+            text: "Acq Gold";
+            overlay_font_size: root.overlay_font_size;
+            width: max(76px, root.overlay_font_size * 4.9px);
+            horizontal-alignment: right;
+        }
+
         if root.show_ha: CompactLabel {
             text: "HA";
             overlay_font_size: root.overlay_font_size;
             width: max(42px, root.overlay_font_size * 2.8px);
+            horizontal-alignment: right;
+        }
+
+        if root.show_army: CompactLabel {
+            text: "Army";
+            overlay_font_size: root.overlay_font_size;
+            width: max(52px, root.overlay_font_size * 3.4px);
             horizontal-alignment: right;
         }
 
@@ -187,10 +208,10 @@ component OverlayHeaderRow inherits Rectangle {
             horizontal-alignment: right;
         }
 
-        if root.show_acq_gold: CompactLabel {
-            text: "Acq Gold";
+        if root.show_knights: CompactLabel {
+            text: "Knights";
             overlay_font_size: root.overlay_font_size;
-            width: max(76px, root.overlay_font_size * 4.9px);
+            width: max(58px, root.overlay_font_size * 3.8px);
             horizontal-alignment: right;
         }
 
@@ -226,27 +247,6 @@ component OverlayHeaderRow inherits Rectangle {
             text: "Prod Wood";
             overlay_font_size: root.overlay_font_size;
             width: max(78px, root.overlay_font_size * 5.0px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_total_effect: CompactLabel {
-            text: "Total";
-            overlay_font_size: root.overlay_font_size;
-            width: max(56px, root.overlay_font_size * 3.6px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_knights: CompactLabel {
-            text: "Knights";
-            overlay_font_size: root.overlay_font_size;
-            width: max(58px, root.overlay_font_size * 3.8px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_ff: CompactLabel {
-            text: "FF";
-            overlay_font_size: root.overlay_font_size;
-            width: max(42px, root.overlay_font_size * 2.8px);
             horizontal-alignment: right;
         }
 
@@ -466,22 +466,10 @@ component OverlayPlayerRow inherits Rectangle {
             overflow: elide;
         }
 
-        if root.show_gold: VerticalLayout {
-            width: max(68px, root.overlay_font_size * 4.4px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.gold; overlay_font_size: root.overlay_font_size; }
-        }
-
         if root.show_population: VerticalLayout {
             width: max(82px, root.overlay_font_size * 5.2px);
             spacing: 0px;
             CompactValue { text: root.player_data.population; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_army: VerticalLayout {
-            width: max(52px, root.overlay_font_size * 3.4px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.army; overlay_font_size: root.overlay_font_size; }
         }
 
         if root.show_food_effect: VerticalLayout {
@@ -496,10 +484,40 @@ component OverlayPlayerRow inherits Rectangle {
             CompactValue { text: root.player_data.tax-text; overlay_font_size: root.overlay_font_size; }
         }
 
+        if root.show_ff: VerticalLayout {
+            width: max(42px, root.overlay_font_size * 2.8px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.ff-text; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_total_effect: VerticalLayout {
+            width: max(80px, root.overlay_font_size * 6.0px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.popularity-text; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_gold: VerticalLayout {
+            width: max(68px, root.overlay_font_size * 4.4px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.gold; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_acq_gold: VerticalLayout {
+            width: max(76px, root.overlay_font_size * 4.9px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.stat-gold-earned; overlay_font_size: root.overlay_font_size; }
+        }
+
         if root.show_ha: VerticalLayout {
             width: max(42px, root.overlay_font_size * 2.8px);
             spacing: 0px;
             CompactValue { text: root.player_data.ha; overlay_font_size: root.overlay_font_size; }
+        }
+
+        if root.show_army: VerticalLayout {
+            width: max(52px, root.overlay_font_size * 3.4px);
+            spacing: 0px;
+            CompactValue { text: root.player_data.army; overlay_font_size: root.overlay_font_size; }
         }
 
         if root.show_cl: VerticalLayout {
@@ -514,10 +532,10 @@ component OverlayPlayerRow inherits Rectangle {
             CompactValue { text: root.player_data.shooters; overlay_font_size: root.overlay_font_size; }
         }
 
-        if root.show_acq_gold: VerticalLayout {
-            width: max(76px, root.overlay_font_size * 4.9px);
+        if root.show_knights: VerticalLayout {
+            width: max(58px, root.overlay_font_size * 3.8px);
             spacing: 0px;
-            CompactValue { text: root.player_data.stat-gold-earned; overlay_font_size: root.overlay_font_size; }
+            CompactValue { text: root.player_data.knights; overlay_font_size: root.overlay_font_size; }
         }
 
         if root.show_prod_food: VerticalLayout {
@@ -548,24 +566,6 @@ component OverlayPlayerRow inherits Rectangle {
             width: max(78px, root.overlay_font_size * 5.0px);
             spacing: 0px;
             CompactValue { text: root.player_data.stat-wood-produced; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_total_effect: VerticalLayout {
-            width: max(56px, root.overlay_font_size * 3.6px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.total-effect-text; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_knights: VerticalLayout {
-            width: max(58px, root.overlay_font_size * 3.8px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.knights; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_ff: VerticalLayout {
-            width: max(42px, root.overlay_font_size * 2.8px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.ff-text; overlay_font_size: root.overlay_font_size; }
         }
 
         if root.show_army_killed: VerticalLayout {
@@ -663,14 +663,14 @@ component PlayerTable inherits Rectangle {
             vertical-stretch: 1;
 
             VerticalLayout {
-                width: 1780px;
+                width: 1808px;
                 spacing: 8px;
 
                 HorizontalLayout {
                     height: 18px;
                     spacing: 8px;
 
-                    TableGroupText { text: "Game stats"; group_width: 526px; }
+                    TableGroupText { text: "Game stats"; group_width: 554px; }
                     TableGroupText { text: "Army"; group_width: 698px; }
                     TableGroupText { text: "Buildings"; group_width: 46px; }
                     TableGroupText { text: "Acquired resources"; group_width: 434px; }
@@ -688,7 +688,7 @@ component PlayerTable inherits Rectangle {
                     TableHeaderText { text: "Pop"; column_width: 44px; }
                     TableHeaderText { text: "FoodFx"; column_width: 52px; }
                     TableHeaderText { text: "Tax"; column_width: 42px; }
-                    TableHeaderText { text: "Total"; column_width: 52px; }
+                    TableHeaderText { text: "Popularity"; column_width: 80px; }
                     TableHeaderText { text: "Army"; column_width: 46px; }
                     TableHeaderText { text: "HA"; column_width: 38px; }
                     TableHeaderText { text: "CL"; column_width: 38px; }
@@ -724,7 +724,7 @@ component PlayerTable inherits Rectangle {
                     TableValueText { text: row.population; column_width: 44px; }
                     TableValueText { text: row.food-ratio-text; column_width: 52px; }
                     TableValueText { text: row.tax-text; column_width: 42px; }
-                    TableValueText { text: row.total-effect-text; column_width: 52px; }
+                    TableValueText { text: row.popularity-text; column_width: 80px; }
                     TableValueText { text: row.army; column_width: 46px; }
                     TableValueText { text: row.ha; column_width: 38px; }
                     TableValueText { text: row.camel-lancers; column_width: 38px; }

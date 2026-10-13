@@ -1119,7 +1119,7 @@ fn overlay_size(
         column_widths.push(scaled_width(78.0, overlay_font_size, 5.0));
     }
     if show_total_effect {
-        column_widths.push(scaled_width(56.0, overlay_font_size, 3.6));
+        column_widths.push(scaled_width(80.0, overlay_font_size, 6.0));
     }
     if show_knights {
         column_widths.push(scaled_width(58.0, overlay_font_size, 3.8));

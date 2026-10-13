@@ -34,6 +34,7 @@ pub struct PlayerSnapshot {
     pub crowding_effect: i32,
     pub population_total: i32,
     pub population_on_bonfire: i32,
+    /// Live popularity in hundredths of a point (0..=10_000).
     pub popularity: i32,
     pub current_population: i32,
     pub army_size: i32,
@@ -142,7 +143,7 @@ impl<'a, R: MemoryRead> PlayerTableReader<'a, R> {
             crowding_effect: popularity_modifier_effect(crowding_popularity_modifier_raw),
             population_total: read_i32(player_offsets::POPULATION_TOTAL)?,
             population_on_bonfire: read_i32(player_offsets::POPULATION_ON_BONFIRE)?,
-            popularity: read_i32(player_offsets::POPULARITY)?,
+            popularity: read_i32(player_offsets::BUILT_IN_POPULARITY)?,
             current_population: read_i32(player_offsets::CURRENT_POPULATION)?,
             army_size: read_i32(player_offsets::ARMY_SIZE)?,
             troops_power: read_i32(player_offsets::TROOPS_POWER)?,
@@ -181,7 +182,55 @@ pub fn tax_effect(tax_type: u16) -> i32 {
 
 #[cfg(test)]
 mod tests {
-    use super::{food_ration_effect, popularity_modifier_effect, signed_effect_text, tax_effect};
+    use std::collections::HashMap;
+
+    use super::{
+        food_ration_effect, player_offsets, popularity_modifier_effect, signed_effect_text,
+        tax_effect, PlayerTableReader, MAX_PLAYERS, PLAYER_STRIDE, PLAYER_TABLE_ANCHOR,
+    };
+    use crate::engine::memory::{checked_offset, MemoryRead};
+
+    struct TestMemory(HashMap<usize, i32>);
+
+    impl MemoryRead for TestMemory {
+        fn read_u8(&self, _: usize) -> anyhow::Result<u8> {
+            Ok(0)
+        }
+        fn read_u16(&self, _: usize) -> anyhow::Result<u16> {
+            Ok(0)
+        }
+        fn read_i16(&self, _: usize) -> anyhow::Result<i16> {
+            Ok(0)
+        }
+        fn read_u32(&self, _: usize) -> anyhow::Result<u32> {
+            Ok(0)
+        }
+        fn read_i32(&self, address: usize) -> anyhow::Result<i32> {
+            Ok(self.0.get(&address).copied().unwrap_or_default())
+        }
+    }
+
+    #[test]
+    fn reads_live_popularity_instead_of_display_score_for_every_player() {
+        let mut memory = TestMemory(HashMap::new());
+        for slot in 0..MAX_PLAYERS {
+            let base = PLAYER_TABLE_ANCHOR + slot * PLAYER_STRIDE;
+            memory.0.insert(
+                checked_offset(base, player_offsets::BUILT_IN_POPULARITY).expect("live field"),
+                7_550 + slot as i32 * 100,
+            );
+            memory.0.insert(
+                checked_offset(base, player_offsets::POPULARITY).expect("score field"),
+                74,
+            );
+        }
+        let players = PlayerTableReader::new(&memory, 0)
+            .read_all()
+            .expect("players");
+        for (slot, player) in players.iter().enumerate() {
+            assert_eq!(player.popularity, 7_550 + slot as i32 * 100);
+        }
+    }
 
     #[test]
     fn food_ration_no_food_overrides_ratio() {
