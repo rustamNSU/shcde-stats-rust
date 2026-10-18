@@ -834,6 +834,8 @@ export component AppWindow inherits Window {
     callback submit_admin_key(string);
     callback request_admin_ui_player(int);
     callback reattach_game();
+    callback import_multiplayer_players();
+    in property <string> player_import_status: "Click to load multiplayer names and colors. Manual edits remain available.";
 
     title: "Stronghold Crusader DE, Monitor";
     icon: @image-url("../assets/icon.png");
@@ -946,17 +948,24 @@ export component AppWindow inherits Window {
                     background: #ffffff;
                     border-color: #dde3ee;
                     border-width: 1px;
-                    height: 168px;
+                    height: 216px;
 
                     VerticalLayout {
                         padding: 12px;
                         spacing: 7px;
 
-                        Text {
-                            text: "Player slots";
-                            color: #111827;
-                            font-size: 14px;
-                            font-weight: 800;
+                        HorizontalLayout {
+                            Text {
+                                text: "Player slots";
+                                color: #111827;
+                                font-size: 14px;
+                                font-weight: 800;
+                                vertical-alignment: center;
+                            }
+                            Button {
+                                text: "Read Steam names + colors";
+                                clicked => { root.import_multiplayer_players(); }
+                            }
                         }
 
                         HorizontalLayout {
@@ -978,6 +987,12 @@ export component AppWindow inherits Window {
                                 PlayerConfigRow { label: "P8"; player_name <=> root.player8_name; enabled <=> root.show_player8; color_index <=> root.player8_color; cycle_color => { root.cycle_player_color(8); } }
                             }
                         }
+                        Text {
+                            text: root.player_import_status;
+                            color: #4b5563;
+                            font-size: 11px;
+                            wrap: word-wrap;
+                        }
                     }
                 }
 
@@ -986,7 +1001,7 @@ export component AppWindow inherits Window {
                     background: #ffffff;
                     border-color: #dde3ee;
                     border-width: 1px;
-                    height: 450px;
+                    height: 430px;
 
                     VerticalLayout {
                         padding: 12px;

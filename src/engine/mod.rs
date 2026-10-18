@@ -5,6 +5,7 @@ pub mod building;
 pub mod enums;
 pub mod game;
 pub mod memory;
+pub mod multiplayer;
 pub mod player;
 pub mod process;
 pub mod service;

@@ -24,7 +24,7 @@ Exclusive fullscreen can hide normal always-on-top windows. Use borderless/windo
 2. Run `shcde-monitor.exe`.
 3. Wait until the app connects to the running game.
 4. Set the title and description.
-5. Configure player names, colors, and visible player slots.
+5. Click `Read Steam names + colors` to import multiplayer players, or edit names and colors manually. Choose visible player slots separately.
 6. Choose the overlay columns you want on stream.
 7. Press `Show overlay`.
 8. Move the overlay into position.
@@ -35,6 +35,7 @@ Exclusive fullscreen can hide normal always-on-top windows. Use borderless/windo
 
 - Automatic connection to the running SHC:DE process.
 - Eight player slots with custom names, colors, and visibility.
+- One-click import of human multiplayer Steam names and game colors. Names without data use `Player N`; manual edits remain until you import again. Player visibility and selection stay as configured.
 - Configurable compact overlay columns.
 - Adjustable overlay font size and panel opacity.
 - Movable/framed overlay mode for positioning.

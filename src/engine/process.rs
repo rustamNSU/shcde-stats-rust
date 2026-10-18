@@ -75,6 +75,12 @@ mod win {
             self.crusader_base + offset
         }
 
+        pub fn mono_runtime(&self) -> Result<(usize, Vec<u8>)> {
+            let (base, path) = find_module(self.process_id, "mono-2.0-bdwgc.dll")?;
+            let file = std::fs::read(path).context("Cannot inspect the game's Mono runtime")?;
+            Ok((base, file))
+        }
+
         pub fn read_exact(&self, address: usize, buffer: &mut [u8]) -> Result<()> {
             let mut bytes_read = 0usize;
             let ok = unsafe {
@@ -177,6 +183,10 @@ mod win {
     }
 
     fn find_module_base(process_id: u32, module_name: &str) -> Result<usize> {
+        find_module(process_id, module_name).map(|(base, _)| base)
+    }
+
+    fn find_module(process_id: u32, module_name: &str) -> Result<(usize, std::path::PathBuf)> {
         let snapshot = unsafe {
             CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, process_id)
         };
@@ -195,10 +205,11 @@ mod win {
                 let current = wide_array_to_string(&entry.szModule).to_ascii_lowercase();
                 if current == target {
                     let base = entry.modBaseAddr as usize;
+                    let path = std::path::PathBuf::from(wide_array_to_string(&entry.szExePath));
                     unsafe {
                         CloseHandle(snapshot);
                     }
-                    return Ok(base);
+                    return Ok((base, path));
                 }
 
                 let next_ok = unsafe { Module32NextW(snapshot, &mut entry) };
@@ -278,6 +289,14 @@ impl MemoryRead for GameProcess {
     }
 }
 
+impl super::multiplayer::Memory for GameProcess {
+    fn read(&self, address: usize, length: usize) -> Result<Vec<u8>> {
+        let mut bytes = vec![0; length];
+        self.read_exact(address, &mut bytes)?;
+        Ok(bytes)
+    }
+}
+
 impl MemoryWrite for GameProcess {
     fn write_u32(&self, address: usize, value: u32) -> Result<()> {
         self.write_exact(address, &value.to_le_bytes())
@@ -286,6 +305,10 @@ impl MemoryWrite for GameProcess {
 
 #[cfg(not(windows))]
 impl GameProcess {
+    pub fn mono_runtime(&self) -> Result<(usize, Vec<u8>)> {
+        anyhow::bail!("multiplayer player names are only supported on Windows")
+    }
+
     pub fn read_exact(&self, _address: usize, _buffer: &mut [u8]) -> Result<()> {
         anyhow::bail!("process memory reading is only supported on Windows")
     }

@@ -4,6 +4,7 @@ use super::addresses::{SCENARIO_MODE, UI_PLAYER_ID};
 use super::building::{BuildingSnapshot, BuildingTableReader};
 use super::game::{GameManagerReader, GameManagerSnapshot, PostGameStatisticsSnapshot};
 use super::memory::MemoryWrite;
+use super::multiplayer::{MultiplayerPlayers, Runtime};
 use super::player::{PlayerSnapshot, PlayerTableReader};
 use super::process::{attach_to_known_game_process, GameProcess};
 use super::snapshot::GameSnapshot;
@@ -34,6 +35,7 @@ pub struct LiveStatsSource {
     cached_units: Vec<UnitSnapshot>,
     cached_buildings: Vec<BuildingSnapshot>,
     cached_post_game_statistics: PostGameStatisticsSnapshot,
+    multiplayer_runtime: Option<Runtime>,
 }
 
 impl LiveStatsSource {
@@ -46,6 +48,7 @@ impl LiveStatsSource {
             cached_units: Vec::new(),
             cached_buildings: Vec::new(),
             cached_post_game_statistics: PostGameStatisticsSnapshot::default(),
+            multiplayer_runtime: None,
         }
     }
 
@@ -60,6 +63,32 @@ impl LiveStatsSource {
         self.cached_units.clear();
         self.cached_buildings.clear();
         self.cached_post_game_statistics = PostGameStatisticsSnapshot::default();
+        self.multiplayer_runtime = None;
+    }
+
+    /// Only the import button requests this data; normal stats refreshes preserve manual choices.
+    pub fn multiplayer_players(&mut self) -> anyhow::Result<MultiplayerPlayers> {
+        if self.process.is_none() {
+            self.process = Some(attach_to_known_game_process()?);
+        }
+        let result = (|| {
+            let process = self
+                .process
+                .as_ref()
+                .ok_or_else(|| anyhow::anyhow!("process attach did not produce a handle"))?;
+            if self.multiplayer_runtime.is_none() {
+                let (base, file) = process.mono_runtime()?;
+                self.multiplayer_runtime = Some(Runtime::locate(process, base, &file)?);
+            }
+            self.multiplayer_runtime
+                .as_ref()
+                .ok_or_else(|| anyhow::anyhow!("Multiplayer name reader unavailable"))?
+                .players(process)
+        })();
+        if result.is_err() {
+            self.multiplayer_runtime = None;
+        }
+        result
     }
 
     pub fn snapshot(&mut self) -> GameSnapshot {
@@ -166,5 +195,50 @@ fn zero_player(player_id: u32) -> PlayerSnapshot {
         slot: (player_id - 1) as usize,
         player_id,
         ..PlayerSnapshot::default()
+    }
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::*;
+    use crate::engine::memory::MemoryRead;
+
+    #[test]
+    #[ignore = "requires a running game; read-only, also checks the no-multiplayer fallback"]
+    fn live_multiplayer_import_is_read_only() -> anyhow::Result<()> {
+        let mut source = LiveStatsSource::new();
+        source.process = Some(attach_to_known_game_process()?);
+        let process = source.process.as_ref().unwrap();
+        let before = process.read_u32(process.module_addr(UI_PLAYER_ID))?;
+        let started = Instant::now();
+        let result = source.multiplayer_players();
+        let process = source.process.as_ref().unwrap();
+        assert_eq!(before, process.read_u32(process.module_addr(UI_PLAYER_ID))?);
+        let players = match result {
+            Ok(players) => players,
+            Err(error) if error.to_string().starts_with("No multiplayer ") => {
+                println!("No current multiplayer session: import returned an error without changing the selected player.");
+                assert!(source.multiplayer_runtime.is_none());
+                assert!(source.last_error.is_none());
+                return Ok(());
+            }
+            Err(error) => return Err(error),
+        };
+        println!(
+            "Imported {} names and {} colors in {:?}",
+            players.name_count(),
+            players.color_count(),
+            started.elapsed()
+        );
+        for (id, player) in &players.players {
+            println!(
+                "Player {id}: name={:?}, color={:?}",
+                player.name, player.color
+            );
+        }
+        assert!(source.multiplayer_runtime.is_some());
+        let second = source.multiplayer_players()?;
+        assert_eq!(players.appearance([1; 8]), second.appearance([1; 8]));
+        Ok(())
     }
 }

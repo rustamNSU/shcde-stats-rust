@@ -245,6 +245,39 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
+    app.on_import_multiplayer_players({
+        let app = app.as_weak();
+        let overlay = overlay.as_weak();
+        let timer_window = timer_window.as_weak();
+        let source = source.clone();
+        let config_state = config_state.clone();
+        move || {
+            let (Some(app), Some(overlay), Some(timer_window)) =
+                (app.upgrade(), overlay.upgrade(), timer_window.upgrade())
+            else {
+                return;
+            };
+            match source.borrow_mut().multiplayer_players() {
+                Ok(players) => {
+                    apply_multiplayer_appearance(&app, &players);
+                    app.set_player_import_status(
+                        format!(
+                            "Loaded {} Steam names and {} player colors. You can edit them below.",
+                            players.name_count(),
+                            players.color_count()
+                        )
+                        .into(),
+                    );
+                    save_current_config(&config_state, &app, &overlay, &timer_window);
+                }
+                Err(error) => app.set_player_import_status(
+                    format!("Could not load players: {error:#}. Your names and colors were kept.")
+                        .into(),
+                ),
+            }
+        }
+    });
+
     overlay.on_hide_overlay({
         let app = app.as_weak();
         let overlay = overlay.as_weak();
@@ -1190,6 +1223,29 @@ fn player_names(app: &AppWindow) -> [slint::SharedString; 8] {
     ]
 }
 
+fn apply_multiplayer_appearance(
+    app: &AppWindow,
+    players: &engine::multiplayer::MultiplayerPlayers,
+) {
+    let appearance = players.appearance(player_colors(app));
+    app.set_player1_name(appearance[0].0.clone().into());
+    app.set_player1_color(appearance[0].1);
+    app.set_player2_name(appearance[1].0.clone().into());
+    app.set_player2_color(appearance[1].1);
+    app.set_player3_name(appearance[2].0.clone().into());
+    app.set_player3_color(appearance[2].1);
+    app.set_player4_name(appearance[3].0.clone().into());
+    app.set_player4_color(appearance[3].1);
+    app.set_player5_name(appearance[4].0.clone().into());
+    app.set_player5_color(appearance[4].1);
+    app.set_player6_name(appearance[5].0.clone().into());
+    app.set_player6_color(appearance[5].1);
+    app.set_player7_name(appearance[6].0.clone().into());
+    app.set_player7_color(appearance[6].1);
+    app.set_player8_name(appearance[7].0.clone().into());
+    app.set_player8_color(appearance[7].1);
+}
+
 fn visible_players(app: &AppWindow) -> [bool; 8] {
     [
         app.get_show_player1(),
@@ -1223,5 +1279,103 @@ fn shooter_options(app: &AppWindow) -> ShooterUiOptions {
         count_xbows: app.get_shooter_count_xbows(),
         count_arab_bows: app.get_shooter_count_arab_bows(),
         count_slingers: app.get_shooter_count_slingers(),
+    }
+}
+
+#[cfg(test)]
+mod appearance_tests {
+    use super::*;
+    use engine::multiplayer::{MultiplayerPlayers, PlayerIdentity};
+    use slint::platform::software_renderer::{MinimalSoftwareWindow, RepaintBufferType};
+
+    struct TestPlatform(Rc<RefCell<Vec<Rc<MinimalSoftwareWindow>>>>);
+    impl slint::platform::Platform for TestPlatform {
+        fn create_window_adapter(
+            &self,
+        ) -> Result<Rc<dyn slint::platform::WindowAdapter>, slint::PlatformError> {
+            let window = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
+            self.0.borrow_mut().push(window.clone());
+            Ok(window)
+        }
+    }
+
+    #[test]
+    fn imports_appearance_preserves_selection_and_manual_edits_and_serializes_settings() {
+        let windows = Rc::new(RefCell::new(Vec::new()));
+        slint::platform::set_platform(Box::new(TestPlatform(windows.clone()))).unwrap();
+        let app = AppWindow::new().unwrap();
+        app.set_show_player1(false);
+        app.set_show_player3(true);
+        app.set_show_player8(true);
+        app.set_timer_player_id(5);
+        app.set_admin_game_player_id(7);
+        app.set_admin_ui_player_id(6);
+        app.set_player1_name("Custom caster name".into());
+        app.set_player4_name("Old name".into());
+        app.set_player2_color(8);
+        let visibility = visible_players(&app);
+        let mut players = MultiplayerPlayers::default();
+        players.players.insert(
+            1,
+            PlayerIdentity {
+                name: Some("Рустам 🏹".into()),
+                color: Some(4),
+            },
+        );
+        players.players.insert(
+            4,
+            PlayerIdentity {
+                name: None,
+                color: Some(7),
+            },
+        );
+        apply_multiplayer_appearance(&app, &players);
+        assert_eq!(app.get_player1_name(), "Рустам 🏹");
+        assert_eq!(app.get_player1_color(), 4);
+        assert_eq!(app.get_player4_name(), "Player 4");
+        assert_eq!(app.get_player4_color(), 7);
+        assert_eq!(app.get_player2_color(), 8);
+        assert_eq!(visible_players(&app), visibility);
+        assert_eq!(app.get_timer_player_id(), 5);
+        assert_eq!(app.get_admin_game_player_id(), 7);
+        assert_eq!(app.get_admin_ui_player_id(), 6);
+        app.set_player1_name("Manual after import".into());
+        app.set_player1_color(6);
+        let mut config = AppConfig {
+            players: player_config(&app),
+            ..AppConfig::default()
+        };
+        config.normalize();
+        let restored: AppConfig =
+            serde_json::from_str(&serde_json::to_string(&config).unwrap()).unwrap();
+        assert_eq!(restored.players[0].name, "Manual after import");
+        assert_eq!(restored.players[0].color, 6);
+        assert!(!restored.players[0].visible);
+        assert!(restored.players[7].visible);
+        let rows = to_player_ui_rows(
+            &engine::service::empty_snapshot(),
+            &player_names(&app),
+            &visible_players(&app),
+            &player_colors(&app),
+            &shooter_options(&app),
+        );
+        assert_eq!(rows[0].name, "Manual after import");
+        assert_eq!(rows[0].color_index, 6);
+        assert!(!rows[0].visible);
+        app.set_player_rows(Rc::new(VecModel::from(rows)).into());
+        app.show().unwrap();
+        let window = windows.borrow()[0].clone();
+        window.set_size(PhysicalSize::new(1460, 900));
+        window.request_redraw();
+        let mut pixels = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(1460, 900);
+        assert!(window.draw_if_needed(|renderer| {
+            renderer.render(pixels.make_mut_slice(), 1460);
+        }));
+        if let Ok(path) = std::env::var("SHCDE_UI_CAPTURE_PATH") {
+            let mut image = b"P6\n1460 900\n255\n".to_vec();
+            image.extend_from_slice(pixels.as_bytes());
+            std::fs::write(path, image).unwrap();
+        }
+        app.hide().unwrap();
     }
 }
