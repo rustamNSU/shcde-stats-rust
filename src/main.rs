@@ -2,6 +2,7 @@
 
 mod config;
 mod engine;
+mod history;
 mod obfuscation;
 mod ui;
 
@@ -59,8 +60,11 @@ fn main() -> Result<(), slint::PlatformError> {
         initial_snapshot.game.ui_player_id,
     );
     sync_admin_window(&app, &admin_window, &initial_snapshot);
+    let _steam_id_timer = ui::steam_ids::install(&app, source.clone(), config_state.clone());
+    let history_runtime = ui::history::install(&app, source.clone(), config_state.clone());
 
     app.window().on_close_requested({
+        let finish_history = history_runtime.finisher();
         let app = app.as_weak();
         let overlay = overlay.as_weak();
         let timer_window = timer_window.as_weak();
@@ -73,6 +77,10 @@ fn main() -> Result<(), slint::PlatformError> {
                 timer_window.upgrade(),
                 admin_window.upgrade(),
             ) {
+                if let Err(error) = finish_history() {
+                    app.set_process_status(format!("History could not be finalized: {error:#}. Retry closing after fixing the save location.").into());
+                    return CloseRequestResponse::KeepWindowShown;
+                }
                 save_current_config(&config_state, &app, &overlay, &timer_window);
                 overlay.hide().ok();
                 timer_window.hide().ok();
@@ -472,6 +480,7 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     let result = app.run();
+    let _ = history_runtime.finish();
     save_current_config(&config_state, &app, &overlay, &timer_window);
     result
 }
@@ -1299,6 +1308,35 @@ mod appearance_tests {
         }
     }
 
+    fn render_capture(window: &MinimalSoftwareWindow, width: u32, height: u32, suffix: &str) {
+        window.set_size(PhysicalSize::new(width, height));
+        window.request_redraw();
+        let mut pixels = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(width, height);
+        assert!(window.draw_if_needed(|renderer| {
+            renderer.render(pixels.make_mut_slice(), width as usize);
+        }));
+        if let Ok(path) = std::env::var("SHCDE_UI_CAPTURE_PATH") {
+            let path = std::path::PathBuf::from(path);
+            let stem = path.file_stem().unwrap().to_string_lossy();
+            let path = path.with_file_name(format!("{stem}{suffix}.ppm"));
+            let mut image = format!("P6\n{width} {height}\n255\n").into_bytes();
+            image.extend_from_slice(pixels.as_bytes());
+            std::fs::write(path, image).unwrap();
+        }
+    }
+
+    pub(crate) fn click(app: &AppWindow, x: f32, y: f32) {
+        use slint::platform::{PointerEventButton, WindowEvent};
+        let position = slint::LogicalPosition::new(x, y);
+        let button = PointerEventButton::Left;
+        app.window()
+            .dispatch_event(WindowEvent::PointerMoved { position });
+        app.window()
+            .dispatch_event(WindowEvent::PointerPressed { position, button });
+        app.window()
+            .dispatch_event(WindowEvent::PointerReleased { position, button });
+    }
+
     #[test]
     fn imports_appearance_preserves_selection_and_manual_edits_and_serializes_settings() {
         let windows = Rc::new(RefCell::new(Vec::new()));
@@ -1320,6 +1358,7 @@ mod appearance_tests {
             PlayerIdentity {
                 name: Some("Рустам 🏹".into()),
                 color: Some(4),
+                steam_id: None,
             },
         );
         players.players.insert(
@@ -1327,6 +1366,7 @@ mod appearance_tests {
             PlayerIdentity {
                 name: None,
                 color: Some(7),
+                steam_id: None,
             },
         );
         apply_multiplayer_appearance(&app, &players);
@@ -1365,17 +1405,75 @@ mod appearance_tests {
         app.set_player_rows(Rc::new(VecModel::from(rows)).into());
         app.show().unwrap();
         let window = windows.borrow()[0].clone();
-        window.set_size(PhysicalSize::new(1460, 900));
-        window.request_redraw();
-        let mut pixels = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(1460, 900);
-        assert!(window.draw_if_needed(|renderer| {
-            renderer.render(pixels.make_mut_slice(), 1460);
-        }));
-        if let Ok(path) = std::env::var("SHCDE_UI_CAPTURE_PATH") {
-            let mut image = b"P6\n1460 900\n255\n".to_vec();
-            image.extend_from_slice(pixels.as_bytes());
-            std::fs::write(path, image).unwrap();
+        render_capture(&window, 1460, 900, "");
+
+        let mut identities = MultiplayerPlayers::default();
+        for (index, name) in [
+            "Player One",
+            "Рустам",
+            "Player Three",
+            "Very long Steam display name example",
+            "Player Five",
+            "Player Six",
+            "Player Seven",
+            "Player Eight",
+        ]
+        .iter()
+        .enumerate()
+        {
+            identities.players.insert(
+                index + 1,
+                PlayerIdentity {
+                    name: Some((*name).into()),
+                    color: Some(index as i32 + 1),
+                    steam_id: (index != 7).then_some(76_561_198_027_391_269 + index as u64),
+                },
+            );
         }
+        let identity_rows = ui::steam_ids::to_rows(&identities, &player_colors(&app));
+        app.set_steam_id_rows(Rc::new(VecModel::from(identity_rows.clone())).into());
+        app.set_steam_id_status(
+            "8 players · 7 Steam profiles available · refreshes every second.".into(),
+        );
+        app.set_admin_mode(true);
+        app.set_settings_tab(3);
+        render_capture(&window, 1460, 900, "-steam-id");
+        let profile_clicks = Rc::new(RefCell::new(Vec::new()));
+        app.on_open_steam_profile({
+            let clicks = profile_clicks.clone();
+            move |slot, id| clicks.borrow_mut().push((slot, id.to_string()))
+        });
+        click(&app, 850., 138.);
+        click(&app, 850., 404.); // An unavailable ID must not open a profile.
+        assert_eq!(
+            &*profile_clicks.borrow(),
+            &[(1, "76561198027391269".to_owned())]
+        );
+        render_capture(&window, 1120, 760, "-steam-id-small");
+        window.set_size(PhysicalSize::new(1460, 900));
+        ui::history::render_test_fixtures(&app, |suffix| {
+            render_capture(&window, 1460, 900, suffix)
+        });
+        assert_eq!(app.get_player1_name(), "Manual after import");
+        assert_eq!(visible_players(&app), visibility);
+
+        // A UI flag or a restored tab alone must not grant identity access.
+        let _timer = ui::steam_ids::install(
+            &app,
+            Rc::new(RefCell::new(LiveStatsSource::new())),
+            Rc::new(RefCell::new(AppConfig::default())),
+        );
+        assert_eq!(app.get_steam_id_rows().row_count(), 0);
+        assert_eq!(app.get_settings_tab(), 0);
+        app.set_steam_id_rows(Rc::new(VecModel::from(identity_rows)).into());
+        app.set_settings_tab(3);
+        app.invoke_refresh_steam_ids();
+        assert_eq!(app.get_steam_id_rows().row_count(), 0);
+        assert_eq!(app.get_steam_id_status(), "Admin key required.");
+        app.invoke_open_steam_profile(1, "76561198027391269".into());
+        assert!(app.get_steam_id_status().contains("Admin key required"));
+        app.set_admin_mode(false);
+        render_capture(&window, 1460, 900, "-public");
         app.hide().unwrap();
     }
 }

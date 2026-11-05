@@ -1,14 +1,21 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use super::addresses::{SCENARIO_MODE, UI_PLAYER_ID};
 use super::building::{BuildingSnapshot, BuildingTableReader};
 use super::game::{GameManagerReader, GameManagerSnapshot, PostGameStatisticsSnapshot};
+use super::history_session::{HistorySession, NativeHistoryReader};
 use super::memory::MemoryWrite;
 use super::multiplayer::{MultiplayerPlayers, Runtime};
 use super::player::{PlayerSnapshot, PlayerTableReader};
 use super::process::{attach_to_known_game_process, GameProcess};
 use super::snapshot::GameSnapshot;
 use super::unit::{UnitSnapshot, UnitTableReader};
+
+#[derive(Debug, Clone)]
+pub struct HistorySample {
+    pub snapshot: GameSnapshot,
+    pub session: HistorySession,
+}
 
 #[derive(Debug, Clone)]
 pub struct EngineOptions {
@@ -36,6 +43,11 @@ pub struct LiveStatsSource {
     cached_buildings: Vec<BuildingSnapshot>,
     cached_post_game_statistics: PostGameStatisticsSnapshot,
     multiplayer_runtime: Option<Runtime>,
+    last_runtime_discovery: Option<Instant>,
+    last_game_tick: Option<u32>,
+    last_history_snapshot: Option<GameSnapshot>,
+    last_history_session: Option<HistorySession>,
+    history_process_exited: bool,
 }
 
 impl LiveStatsSource {
@@ -49,6 +61,11 @@ impl LiveStatsSource {
             cached_buildings: Vec::new(),
             cached_post_game_statistics: PostGameStatisticsSnapshot::default(),
             multiplayer_runtime: None,
+            last_runtime_discovery: None,
+            last_game_tick: None,
+            last_history_snapshot: None,
+            last_history_session: None,
+            history_process_exited: false,
         }
     }
 
@@ -64,13 +81,216 @@ impl LiveStatsSource {
         self.cached_buildings.clear();
         self.cached_post_game_statistics = PostGameStatisticsSnapshot::default();
         self.multiplayer_runtime = None;
+        self.last_runtime_discovery = None;
+        self.last_game_tick = None;
+        self.last_history_snapshot = None;
+        self.last_history_session = None;
     }
 
-    /// Only the import button requests this data; normal stats refreshes preserve manual choices.
-    pub fn multiplayer_players(&mut self) -> anyhow::Result<MultiplayerPlayers> {
+    /// Unknown read/attach failures do not imply that the game exited.
+    pub fn history_process_running(&self) -> bool {
+        !self.history_process_exited
+    }
+
+    fn ensure_connected(&mut self) -> anyhow::Result<()> {
+        if let Some(process) = &self.process {
+            if !process.is_alive()? {
+                self.history_process_exited = true;
+                self.reattach();
+            }
+        }
         if self.process.is_none() {
             self.process = Some(attach_to_known_game_process()?);
+            self.history_process_exited = false;
         }
+        Ok(())
+    }
+
+    fn notice_process_exit(&mut self) {
+        if self
+            .process
+            .as_ref()
+            .is_some_and(|process| matches!(process.is_alive(), Ok(false)))
+        {
+            self.history_process_exited = true;
+            self.reattach();
+        }
+    }
+
+    pub(crate) fn managed_history_session(&mut self) -> anyhow::Result<HistorySession> {
+        self.ensure_connected()?;
+        let result = (|| {
+            let process = self
+                .process
+                .as_ref()
+                .ok_or_else(|| anyhow::anyhow!("process attach did not produce a handle"))?;
+            if self.multiplayer_runtime.as_ref().is_none_or(|runtime| {
+                !runtime.has_terminal_metadata()
+                    && self
+                        .last_runtime_discovery
+                        .is_none_or(|last| last.elapsed() >= Duration::from_secs(5))
+            }) {
+                let (base, file) = process.mono_runtime()?;
+                self.multiplayer_runtime = Some(Runtime::locate(process, base, &file)?);
+                self.last_runtime_discovery = Some(Instant::now());
+            }
+            let mut session = self
+                .multiplayer_runtime
+                .as_ref()
+                .ok_or_else(|| anyhow::anyhow!("Multiplayer history reader unavailable"))?
+                .history_session(process)?;
+            session.process_id = process.process_id();
+            Ok(session)
+        })();
+        if result.is_err() {
+            self.multiplayer_runtime = None;
+            self.notice_process_exit();
+        }
+        result
+    }
+
+    /// Unlike the display snapshot, a failed history read never produces zero statistics.
+    pub fn history_sample(&mut self) -> anyhow::Result<HistorySample> {
+        let result = self.read_history_sample();
+        if result.is_err() {
+            self.notice_process_exit();
+        }
+        result
+    }
+
+    fn read_history_sample(&mut self) -> anyhow::Result<HistorySample> {
+        let before = self.managed_history_session()?;
+        if let Some(sample) = self.terminal_history_sample(&before)? {
+            return Ok(sample);
+        }
+        let active_world =
+            before.multiplayer_active && before.director_multiplayer && before.world_loaded;
+        if !active_world {
+            let mut session = before;
+            session.world_loaded = false;
+            if !session.resyncing && (!session.multiplayer_active || !session.director_multiplayer)
+            {
+                self.last_history_session = None;
+            }
+            // The end screen can discard its roster before native data is readable.
+            // Retain the actual last sample, including its original read timestamp.
+            let snapshot = match &self.last_history_snapshot {
+                Some(snapshot) => snapshot.clone(),
+                None => self.read_snapshot()?,
+            };
+            return Ok(HistorySample { snapshot, session });
+        }
+        let snapshot = self.read_snapshot()?;
+        let mut session = self.managed_history_session()?;
+        anyhow::ensure!(
+            before == session,
+            "Multiplayer session changed during statistics read"
+        );
+        anyhow::ensure!(
+            snapshot.game.is_plausible(),
+            "The multiplayer world is not ready"
+        );
+        let process = self
+            .process
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("process attach did not produce a handle"))?;
+        NativeHistoryReader::new(process, process.crusader_base()).enrich(&mut session)?;
+        anyhow::ensure!(
+            before == self.managed_history_session()?,
+            "Multiplayer session changed during setup read"
+        );
+        self.last_history_snapshot = Some(snapshot.clone());
+        if confirmed_history_context(&session) {
+            self.last_history_session = Some(session.clone());
+        }
+        Ok(HistorySample { snapshot, session })
+    }
+
+    fn terminal_history_sample(
+        &mut self,
+        before: &HistorySession,
+    ) -> anyhow::Result<Option<HistorySample>> {
+        let (Some(previous), Some(last_snapshot)) =
+            (&self.last_history_session, &self.last_history_snapshot)
+        else {
+            return Ok(None);
+        };
+        if before.resyncing
+            || previous.process_id != before.process_id
+            || (!previous.completed && last_snapshot.read_time.elapsed() > Duration::from_secs(30))
+            || before
+                .game_token
+                .as_ref()
+                .is_some_and(|token| Some(token) != previous.game_token.as_ref())
+        {
+            return Ok(None);
+        }
+        let process = self
+            .process
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("process attach did not produce a handle"))?;
+        let runtime = self
+            .multiplayer_runtime
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Multiplayer history reader unavailable"))?;
+        if !runtime.mission_over_visible(process)? {
+            return Ok(None);
+        }
+        if previous.completed {
+            return Ok(Some(HistorySample {
+                snapshot: last_snapshot.clone(),
+                session: previous.clone(),
+            }));
+        }
+        let previous = previous.clone();
+        let last_tick = last_snapshot.game.ticks;
+        self.last_heavy_refresh = None;
+        let snapshot = self.read_snapshot()?;
+        anyhow::ensure!(
+            snapshot.game.is_plausible() && snapshot.game.ticks >= last_tick,
+            "The ending multiplayer world changed"
+        );
+        let mut session = previous.clone();
+        session.multiplayer_active = before.multiplayer_active;
+        session.director_multiplayer = before.director_multiplayer;
+        session.world_loaded = false;
+        session.completed = true;
+        session.resyncing = false;
+        let process = self
+            .process
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("process attach did not produce a handle"))?;
+        NativeHistoryReader::new(process, process.crusader_base()).enrich(&mut session)?;
+        anyhow::ensure!(
+            session.map_name == previous.map_name
+                && session.map_size == previous.map_size
+                && session.game_type == previous.game_type,
+            "The ending multiplayer map changed"
+        );
+        anyhow::ensure!(
+            &self.managed_history_session()? == before,
+            "Multiplayer lifecycle changed during the final read"
+        );
+        let process = self
+            .process
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("process attach did not produce a handle"))?;
+        let runtime = self
+            .multiplayer_runtime
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Multiplayer history reader unavailable"))?;
+        anyhow::ensure!(
+            runtime.mission_over_visible(process)?,
+            "Mission-over screen changed during the final read"
+        );
+        self.last_history_snapshot = Some(snapshot.clone());
+        self.last_history_session = Some(session.clone());
+        Ok(Some(HistorySample { snapshot, session }))
+    }
+
+    /// Used by the appearance import and admin identity view; never changes manual choices.
+    pub fn multiplayer_players(&mut self) -> anyhow::Result<MultiplayerPlayers> {
+        self.ensure_connected()?;
         let result = (|| {
             let process = self
                 .process
@@ -87,6 +307,7 @@ impl LiveStatsSource {
         })();
         if result.is_err() {
             self.multiplayer_runtime = None;
+            self.notice_process_exit();
         }
         result
     }
@@ -99,6 +320,7 @@ impl LiveStatsSource {
             }
             Err(err) => {
                 self.last_error = Some(format!("{err:#}"));
+                self.notice_process_exit();
                 empty_snapshot()
             }
         }
@@ -142,9 +364,7 @@ impl LiveStatsSource {
     }
 
     fn read_snapshot(&mut self) -> anyhow::Result<GameSnapshot> {
-        if self.process.is_none() {
-            self.process = Some(attach_to_known_game_process()?);
-        }
+        self.ensure_connected()?;
 
         let process = self
             .process
@@ -153,6 +373,13 @@ impl LiveStatsSource {
         let game_reader = GameManagerReader::new(process, process.crusader_base());
         let game = game_reader.read()?;
         let players = PlayerTableReader::new(process, process.crusader_base()).read_all()?;
+
+        if self
+            .last_game_tick
+            .is_some_and(|previous| game.ticks < previous)
+        {
+            self.last_heavy_refresh = None;
+        }
 
         let should_refresh_heavy = self
             .last_heavy_refresh
@@ -168,6 +395,8 @@ impl LiveStatsSource {
             self.last_heavy_refresh = Some(Instant::now());
         }
 
+        self.last_game_tick = Some(game.ticks);
+
         Ok(GameSnapshot {
             game,
             players,
@@ -177,6 +406,19 @@ impl LiveStatsSource {
             read_time: Instant::now(),
         })
     }
+}
+
+fn confirmed_history_context(session: &HistorySession) -> bool {
+    let accounts: std::collections::BTreeSet<_> = session
+        .participants
+        .iter()
+        .filter(|member| !member.is_ai)
+        .filter_map(|member| member.steam_id)
+        .collect();
+    session
+        .local_steam_id
+        .is_some_and(|local| accounts.contains(&local))
+        && accounts.len() >= 2
 }
 
 pub fn empty_snapshot() -> GameSnapshot {
@@ -204,6 +446,37 @@ mod tests {
     use crate::engine::memory::MemoryRead;
 
     #[test]
+    #[ignore = "requires a running initialized game; reads only, never creates journal files"]
+    fn live_history_session_is_read_only() -> anyhow::Result<()> {
+        let mut source = LiveStatsSource::new();
+        source.process = Some(attach_to_known_game_process()?);
+        let process = source.process.as_ref().unwrap();
+        let player_before = process.read_u32(process.module_addr(UI_PLAYER_ID))?;
+        let sample = source.history_sample()?;
+        let humans = sample
+            .session
+            .participants
+            .iter()
+            .filter(|member| !member.is_ai && member.steam_id.is_some())
+            .count();
+        let terminal_metadata = source
+            .multiplayer_runtime
+            .as_ref()
+            .is_some_and(Runtime::has_terminal_metadata);
+        println!("History reader: multiplayer={}, director_multiplayer={}, loaded={}, completed={}, end-screen metadata={terminal_metadata}, Steam accounts={humans}",sample.session.multiplayer_active,sample.session.director_multiplayer,sample.session.world_loaded,sample.session.completed);
+        if sample.session.world_loaded {
+            assert_eq!(sample.session.game_type, Some(3));
+            assert!(sample.snapshot.game.is_plausible());
+        }
+        let process = source.process.as_ref().unwrap();
+        assert_eq!(
+            player_before,
+            process.read_u32(process.module_addr(UI_PLAYER_ID))?
+        );
+        Ok(())
+    }
+
+    #[test]
     #[ignore = "requires a running game; read-only, also checks the no-multiplayer fallback"]
     fn live_multiplayer_import_is_read_only() -> anyhow::Result<()> {
         let mut source = LiveStatsSource::new();
@@ -225,20 +498,69 @@ mod tests {
             Err(error) => return Err(error),
         };
         println!(
-            "Imported {} names and {} colors in {:?}",
+            "Imported {} names, {} colors and {} SteamIDs in {:?}",
             players.name_count(),
             players.color_count(),
+            players
+                .players
+                .values()
+                .filter(|player| player.steam_id.is_some())
+                .count(),
             started.elapsed()
         );
-        for (id, player) in &players.players {
-            println!(
-                "Player {id}: name={:?}, color={:?}",
-                player.name, player.color
-            );
-        }
         assert!(source.multiplayer_runtime.is_some());
         let second = source.multiplayer_players()?;
         assert_eq!(players.appearance([1; 8]), second.appearance([1; 8]));
+        for (slot, player) in &players.players {
+            assert_eq!(player.steam_id, second.players.get(slot).unwrap().steam_id);
+        }
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "explicit opt-in: records the current multiplayer match in the authorized local journal"]
+    fn live_history_creates_and_updates_one_json() -> anyhow::Result<()> {
+        if std::env::var("SHCDE_HISTORY_LIVE_CAPTURE").as_deref() != Ok("1") {
+            return Ok(());
+        }
+        let config: crate::config::AppConfig =
+            serde_json::from_slice(&std::fs::read(crate::config::config_path())?)?;
+        anyhow::ensure!(
+            config.admin_mode_enabled(),
+            "Admin unlock required for live journal capture"
+        );
+        let mut source = LiveStatsSource::new();
+        let sample = source.history_sample()?;
+        anyhow::ensure!(
+            confirmed_history_context(&sample.session) && sample.session.world_loaded,
+            "A confirmed online multiplayer match is required"
+        );
+        let root = crate::history::directory();
+        let mut recorder = crate::history::recorder::Recorder::open(root.clone())?;
+        recorder.observe(&sample)?;
+        let id = recorder
+            .active()
+            .ok_or_else(|| anyhow::anyhow!("Match did not enter recording"))?
+            .id
+            .clone();
+        let path = crate::history::game_path(&root, &id)?;
+        let first = std::fs::read(&path)?;
+        for _ in 0..6 {
+            std::thread::sleep(Duration::from_secs(1));
+            let sample = source.history_sample()?;
+            recorder.observe(&sample)?;
+        }
+        recorder.checkpoint()?;
+        let saved = crate::history::read_record(&path)?;
+        assert_eq!(saved.players.len(), 8);
+        assert_ne!(
+            first,
+            std::fs::read(&path)?,
+            "Latest-state JSON should update"
+        );
+        let records = crate::history::load_games(&root)?.0;
+        let journal = recorder.rebuild_journal(&records)?;
+        println!("Live recording verified: one match JSON updated; {} Steam accounts indexed. Game and controls unchanged.",journal.players.len());
         Ok(())
     }
 }

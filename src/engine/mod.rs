@@ -4,6 +4,7 @@ pub mod addresses;
 pub mod building;
 pub mod enums;
 pub mod game;
+pub mod history_session;
 pub mod memory;
 pub mod multiplayer;
 pub mod player;

@@ -1,4 +1,5 @@
 use anyhow::Result;
+use serde::Serialize;
 
 use super::addresses::{
     post_game_offsets, EXTREME_POWER_BAR_ANY_MODE, EXTREME_POWER_BAR_PLAYER1, GAME_MANAGER_BASE,
@@ -9,7 +10,7 @@ use super::addresses::{
 };
 use super::memory::MemoryRead;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct GameManagerSnapshot {
     pub sands_timer: u32,
     pub scenario_mode: u32,
@@ -33,7 +34,7 @@ impl GameManagerSnapshot {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct PostGamePlayerStats {
     pub player_id: u32,
     pub gold_earning: u32,
@@ -49,13 +50,13 @@ pub struct PostGamePlayerStats {
     pub army_recruited: u32,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct KillMatrixRow {
     pub killer_player_id: u32,
     pub killed_army_by_column: [u32; KILL_MATRIX_COLUMNS],
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct PostGameStatisticsSnapshot {
     pub players: Vec<PostGamePlayerStats>,
     pub army_kills_matrix: Vec<KillMatrixRow>,

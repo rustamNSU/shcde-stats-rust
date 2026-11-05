@@ -16,8 +16,8 @@ mod win {
         TH32CS_SNAPPROCESS,
     };
     use windows_sys::Win32::System::Threading::{
-        OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_VM_OPERATION, PROCESS_VM_READ,
-        PROCESS_VM_WRITE,
+        GetExitCodeProcess, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_VM_OPERATION,
+        PROCESS_VM_READ, PROCESS_VM_WRITE,
     };
 
     use crate::engine::addresses::MODULE_NAME;
@@ -65,6 +65,14 @@ mod win {
 
         pub fn process_id(&self) -> u32 {
             self.process_id
+        }
+
+        pub fn is_alive(&self) -> Result<bool> {
+            let mut exit_code = 0;
+            if unsafe { GetExitCodeProcess(self.handle, &mut exit_code) } == 0 {
+                return Err(last_os_error("GetExitCodeProcess"));
+            }
+            Ok(exit_code == 259) // STILL_ACTIVE, queried through the read-only handle.
         }
 
         pub fn crusader_base(&self) -> usize {
@@ -248,6 +256,14 @@ pub struct GameProcess {
 
 #[cfg(not(windows))]
 impl GameProcess {
+    pub fn process_id(&self) -> u32 {
+        0
+    }
+
+    pub fn is_alive(&self) -> Result<bool> {
+        Ok(false)
+    }
+
     pub fn crusader_base(&self) -> usize {
         self.crusader_base
     }

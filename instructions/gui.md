@@ -21,6 +21,58 @@ It should provide:
 
 The first settings column should stay readable at the default window size. The stats table should handle many columns with horizontal scrolling instead of forcing the settings column off screen.
 
+### SteamID tab (admin only)
+
+After the existing admin key is accepted, **SteamID** appears beside the settings
+tabs. It shows human multiplayer players with their current Steam name in their
+game color and full SteamID64. Clicking the ID opens its Steam profile. This page is
+separate from the normal statistics and detached windows.
+
+Identities are collected once per second while admin mode is unlocked, including
+while other tabs are open. **Refresh Steam IDs** requests an immediate update.
+The last match's names, colors, Steam IDs and profile links remain available after
+the match ends, the player leaves, or the game closes. Read failures and empty
+rosters do not clear them; a new active, loaded match replaces them. On app restart,
+the latest locally recorded match restores the table if no match is running.
+AI players are omitted. Profile links are checked against the displayed account
+before opening in the default browser, so they also work after the match.
+Reading this page does not change the game or import names over manual aliases.
+
+Steam IDs use the same clickable text in the SteamID table, game rosters, player
+journal and player details. Only the numeric ID is displayed; clicking a player
+name opens their journal details, while clicking the ID opens the Steam profile.
+
+### Game records and player journal (admin only)
+
+While admin mode is unlocked, the app automatically records confirmed online
+multiplayer matches containing this Steam account and another human Steam
+account. Single-player skirmishes and human-versus-bots-only sessions are excluded.
+Recording works independently of the selected tab.
+
+One JSON is created in `history/games/` beside the existing configuration as soon
+as a match is detected. The app refreshes the latest statistics in memory each
+second and replaces that same JSON every five seconds. No timeline or periodic
+snapshot collection is stored. Game end, departure or game-process exit finalizes
+the record; finalized game files are never rewritten. Closing the monitor saves
+the current values without finalizing an ongoing game, allowing it to resume on
+the next launch. An abrupt monitor crash leaves its last successful save intact.
+
+Below the SteamID table in the right working area:
+
+- **Games** opens searchable records with setup, P1–P8 identities and statistics.
+- **Players** searches SteamID64 and every nickname observed for that account.
+- **Update player journal** rebuilds `history/players.json` from the game records.
+- **Export games…** exports the filtered games, selected game or selected player's
+  games; from the SteamID page it exports the collection.
+- **Import games…** previews an archive and adds new record IDs. Existing records,
+  including conflicting IDs, are preserved. Independently recorded copies of the
+  same real match can have different IDs and remain separate records.
+- **Open games folder** opens the local JSON directory.
+
+Player names and dates describe observed game records, not a complete Steam name
+history. Unknown results stay unknown. Late attachment is marked as partial
+coverage. The admin key gates app features; the local JSON files are not encrypted.
+
 ## Overlay Window
 
 The overlay window is intended to sit above the game.

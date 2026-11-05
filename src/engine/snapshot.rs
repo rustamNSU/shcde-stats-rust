@@ -19,7 +19,7 @@ pub struct GameSnapshot {
     pub read_time: Instant,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct PlayerOverlayStats {
     pub player_id: u16,
     pub gold: i32,

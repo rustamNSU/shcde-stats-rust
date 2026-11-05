@@ -4118,6 +4118,8 @@ name = "shcde-stats-rust"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
+ "getrandom 0.3.4",
  "ico",
  "image",
  "serde",

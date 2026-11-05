@@ -1,4 +1,4 @@
-import { Button, CheckBox, LineEdit, ScrollView, Slider } from "std-widgets.slint";
+import { Button, CheckBox, LineEdit, ListView, ScrollView, Slider } from "std-widgets.slint";
 
 export struct PlayerUiRow {
     visible: bool,
@@ -41,6 +41,57 @@ export struct PlayerUiRow {
     stat-stone-produced: int,
     stat-iron-produced: int,
     stat-weapons-produced: int,
+}
+
+export struct SteamIdUiRow {
+    player-id: int,
+    name: string,
+    color-index: int,
+    steam-id: string,
+    profile-url: string,
+}
+
+export struct HistoryGameUiRow {
+    id: string,
+    date: string,
+    map: string,
+    duration: string,
+    status: string,
+    players: string,
+    source: string,
+}
+
+export struct JournalPlayerUiRow {
+    steam-id: string,
+    name: string,
+    color-index: int,
+    aliases: string,
+    games: int,
+    last-seen: string,
+    profile-url: string,
+}
+
+export struct HistoryFieldUiRow {
+    label: string,
+    value: string,
+    group: string,
+    steam-id: string,
+}
+
+export struct HistoryRosterUiRow {
+    slot: int,
+    name: string,
+    steam-id: string,
+    color-index: int,
+    team: string,
+    gold: string,
+    population: string,
+    army: string,
+    kills: string,
+    losses: string,
+    acquired-gold: string,
+    food-produced: string,
+    weapons-produced: string,
 }
 
 component FieldLabel inherits Text {
@@ -753,6 +804,523 @@ component PlayerTable inherits Rectangle {
     }
 }
 
+component SteamIdLink inherits Rectangle {
+    in property <string> steam-id;
+    in property <bool> available: root.steam-id != "" && root.steam-id != "—" && root.steam-id != "Unavailable";
+    callback open-profile(string);
+    label := Text {
+        width: parent.width;
+        height: parent.height;
+        text: root.steam-id != "" ? root.steam-id : "—";
+        color: root.available ? #0b65c9 : #8a94a6;
+        font-size: 12px;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+    Rectangle {
+        y: parent.height / 2 + 7px;
+        width: min(parent.width, label.preferred-width);
+        height: 1px;
+        background: #0b65c9;
+        visible: root.available && touch.has-hover;
+    }
+    touch := TouchArea {
+        enabled: root.available;
+        mouse-cursor: pointer;
+        clicked => { root.open-profile(root.steam-id); }
+    }
+}
+
+component SteamIdTable inherits Rectangle {
+    in property <[SteamIdUiRow]> rows;
+    in property <string> status;
+    callback open-profile(int, string);
+
+    border-radius: 6px;
+    background: #ffffff;
+    border-color: #dde3ee;
+    border-width: 1px;
+
+    VerticalLayout {
+        padding: 16px;
+        spacing: 12px;
+        Text {
+            text: "Steam player IDs";
+            color: #111827;
+            font-size: 16px;
+            font-weight: 800;
+        }
+        Text {
+            text: root.status;
+            color: #647084;
+            font-size: 12px;
+            wrap: word-wrap;
+        }
+        ScrollView {
+            horizontal-stretch: 1;
+            vertical-stretch: 1;
+            VerticalLayout {
+                min-width: 450px;
+                spacing: 4px;
+                alignment: start;
+                HorizontalLayout {
+                    height: 28px;
+                    spacing: 16px;
+                    FieldLabel { text: "Player name"; width: 210px; }
+                    FieldLabel { text: "SteamID64"; width: 168px; }
+                    Rectangle { horizontal-stretch: 1; }
+                }
+                for row in root.rows: Rectangle {
+                    height: 34px;
+                    background: #f8fafc;
+                    border-radius: 3px;
+                    HorizontalLayout {
+                        spacing: 16px;
+                        Text {
+                            text: row.name;
+                            width: 210px;
+                            color: row.color-index == 1 ? #df3b30 :
+                                row.color-index == 2 ? #f28c28 :
+                                row.color-index == 3 ? #b69200 :
+                                row.color-index == 4 ? #3b6eea :
+                                row.color-index == 5 ? #111827 :
+                                row.color-index == 6 ? #8e44d7 :
+                                row.color-index == 7 ? #168aad :
+                                row.color-index == 8 ? #33a852 :
+                                #111827;
+                            font-size: 13px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                            overflow: elide;
+                        }
+                        SteamIdLink {
+                            steam-id: row.steam-id;
+                            available: row.profile-url != "";
+                            width: 168px;
+                            open-profile(id) => { root.open-profile(row.player-id, id); }
+                        }
+                        Rectangle { horizontal-stretch: 1; }
+                    }
+                }
+                if root.rows.length == 0: Text {
+                    text: "No Steam player IDs available. Open a multiplayer match, then refresh.";
+                    color: #8a94a6;
+                    font-size: 13px;
+                    height: 44px;
+                }
+            }
+        }
+    }
+}
+
+component HistoryName inherits Text {
+    in property <int> color-index;
+    color: root.color-index == 1 ? #df3b30 :
+        root.color-index == 2 ? #f28c28 :
+        root.color-index == 3 ? #b69200 :
+        root.color-index == 4 ? #3b6eea :
+        root.color-index == 5 ? #111827 :
+        root.color-index == 6 ? #8e44d7 :
+        root.color-index == 7 ? #168aad :
+        root.color-index == 8 ? #33a852 : #111827;
+    font-size: 13px;
+    font-weight: 700;
+    vertical-alignment: center;
+    overflow: elide;
+}
+
+component HistoryText inherits Text {
+    color: #111827;
+    font-size: 12px;
+    vertical-alignment: center;
+    overflow: elide;
+}
+
+component HistoryGamesTable inherits Rectangle {
+    in property <[HistoryGameUiRow]> rows;
+    callback open-game(string);
+    background: #ffffff;
+    border-color: #dde3ee;
+    border-width: 1px;
+    border-radius: 4px;
+    clip: true;
+    VerticalLayout {
+        spacing: 0px;
+        Rectangle {
+            height: 34px;
+            background: #f1f5f9;
+            clip: true;
+            HorizontalLayout {
+                x: list.viewport-x;
+                width: list.viewport-width;
+                padding-left: 8px;
+                padding-right: 8px;
+                spacing: 12px;
+                FieldLabel { text: "Date / map"; width: 250px; }
+                FieldLabel { text: "Players"; horizontal-stretch: 1; }
+                FieldLabel { text: "Duration"; width: 75px; }
+                FieldLabel { text: "Status"; width: 100px; }
+                FieldLabel { text: "Source"; width: 90px; }
+            }
+        }
+        list := ListView {
+            viewport-width: max(self.visible-width, 790px);
+            for row[index] in root.rows: Rectangle {
+                width: list.viewport-width;
+                height: 47px;
+                background: touch.has-hover ? #eaf1fa : mod(index, 2) == 0 ? #ffffff : #f8fafc;
+                HorizontalLayout {
+                    padding-left: 8px;
+                    padding-right: 8px;
+                    spacing: 12px;
+                    VerticalLayout {
+                        width: 250px;
+                        padding-top: 5px;
+                        padding-bottom: 5px;
+                        spacing: 0px;
+                        HistoryText { text: row.date; font-weight: 700; }
+                        HistoryText { text: row.map; color: #647084; font-size: 11px; }
+                    }
+                    HistoryText { text: row.players; horizontal-stretch: 1; }
+                    HistoryText { text: row.duration; width: 75px; }
+                    HistoryText { text: row.status; width: 100px; }
+                    HistoryText { text: row.source; width: 90px; color: #647084; }
+                }
+                touch := TouchArea {
+                    enabled: row.id != "";
+                    mouse-cursor: pointer;
+                    clicked => { root.open-game(row.id); }
+                }
+            }
+        }
+    }
+    if root.rows.length == 0: HistoryText {
+        x: 16px;
+        y: 60px;
+        width: parent.width - 32px;
+        text: "No recorded games match these filters.";
+        color: #647084;
+        wrap: word-wrap;
+    }
+}
+
+component JournalPlayersTable inherits Rectangle {
+    in property <[JournalPlayerUiRow]> rows;
+    callback open-player(string);
+    callback open-profile(string);
+    background: #ffffff;
+    border-color: #dde3ee;
+    border-width: 1px;
+    border-radius: 4px;
+    clip: true;
+    VerticalLayout {
+        spacing: 0px;
+        Rectangle {
+            height: 34px;
+            background: #f1f5f9;
+            clip: true;
+            HorizontalLayout {
+                x: list.viewport-x;
+                width: list.viewport-width;
+                padding-left: 8px;
+                padding-right: 8px;
+                spacing: 12px;
+                FieldLabel { text: "Player / known nicknames"; min-width: 260px; horizontal-stretch: 1; }
+                FieldLabel { text: "SteamID64"; width: 168px; }
+                FieldLabel { text: "Games"; width: 64px; horizontal-alignment: right; }
+                FieldLabel { text: "Last recorded"; width: 140px; }
+            }
+        }
+        list := ListView {
+            viewport-width: max(self.visible-width, 740px);
+            for row[index] in root.rows: Rectangle {
+                width: list.viewport-width;
+                height: 48px;
+                background: touch.has-hover ? #eaf1fa : mod(index, 2) == 0 ? #ffffff : #f8fafc;
+                touch := TouchArea {
+                    enabled: row.steam-id != "";
+                    mouse-cursor: pointer;
+                    clicked => { root.open-player(row.steam-id); }
+                }
+                HorizontalLayout {
+                    padding-left: 8px;
+                    padding-right: 8px;
+                    spacing: 12px;
+                    VerticalLayout {
+                        min-width: 260px;
+                        horizontal-stretch: 1;
+                        padding-top: 5px;
+                        padding-bottom: 5px;
+                        spacing: 0px;
+                        HistoryName { text: row.name; color-index: row.color-index; }
+                        HistoryText { text: row.aliases; color: #647084; font-size: 11px; }
+                    }
+                    SteamIdLink {
+                        steam-id: row.steam-id;
+                        available: row.profile-url != "";
+                        width: 168px;
+                        open-profile(id) => { root.open-profile(id); }
+                    }
+                    HistoryText { text: row.games; width: 64px; horizontal-alignment: right; }
+                    HistoryText { text: row.last-seen; width: 140px; }
+                }
+            }
+        }
+    }
+    if root.rows.length == 0: HistoryText {
+        x: 16px;
+        y: 60px;
+        width: parent.width - 32px;
+        text: "No players match this search. Update the player journal to read saved games.";
+        color: #647084;
+        wrap: word-wrap;
+    }
+}
+
+component HistoryFields inherits VerticalLayout {
+    in property <[HistoryFieldUiRow]> fields;
+    callback open-profile(string);
+    spacing: 1px;
+    for field[index] in root.fields: Rectangle {
+        private property <bool> starts-group: index == 0 || root.fields[index - 1].group != field.group;
+        height: (self.starts-group ? 30px : 0px) + max(40px, value-text.preferred-height + 12px);
+        background: #f8fafc;
+        if self.starts-group: Text {
+            x: 10px;
+            y: 6px;
+            text: field.group;
+            color: #647084;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        FieldLabel {
+            x: 10px;
+            y: parent.starts-group ? 30px : 0px;
+            width: 180px;
+            height: parent.height - self.y;
+            text: field.label;
+        }
+        value-text := Text {
+            x: 205px;
+            y: (parent.starts-group ? 30px : 0px) + 6px;
+            width: max(50px, parent.width - 215px);
+            height: self.preferred-height;
+            text: field.value;
+            color: #111827;
+            font-size: 12px;
+            wrap: word-wrap;
+            visible: field.steam-id == "";
+        }
+        if field.steam-id != "": SteamIdLink {
+            x: 205px;
+            y: (parent.starts-group ? 30px : 0px);
+            width: min(168px, parent.width - 215px);
+            height: parent.height - self.y;
+            steam-id: field.steam-id;
+            open-profile(id) => { root.open-profile(id); }
+        }
+    }
+}
+
+component HistoryRosterTable inherits Rectangle {
+    in property <[HistoryRosterUiRow]> rows;
+    callback open-player(string);
+    callback open-profile(string);
+    height: max(90px, root.rows.length * 35px + 60px);
+    border-width: 1px;
+    border-color: #dde3ee;
+    background: #ffffff;
+    clip: true;
+    scroll := ScrollView {
+        vertical-scrollbar-policy: ScrollBarPolicy.always-off;
+        viewport-width: max(self.visible-width, 1340px);
+        viewport-height: self.visible-height;
+        VerticalLayout {
+            x: 0px;
+            y: 0px;
+            width: scroll.viewport-width;
+            height: root.rows.length * 35px + 36px;
+            spacing: 0px;
+            alignment: start;
+            HorizontalLayout {
+                height: 36px;
+                padding-left: 8px;
+                padding-right: 8px;
+                spacing: 12px;
+                FieldLabel { text: "Slot"; width: 36px; }
+                FieldLabel { text: "Player"; width: 190px; }
+                FieldLabel { text: "SteamID64"; width: 168px; }
+                FieldLabel { text: "Team"; width: 58px; }
+                FieldLabel { text: "Gold"; width: 70px; horizontal-alignment: right; }
+                FieldLabel { text: "Civilians"; width: 70px; horizontal-alignment: right; }
+                FieldLabel { text: "Army"; width: 65px; horizontal-alignment: right; }
+                FieldLabel { text: "Kills"; width: 65px; horizontal-alignment: right; }
+                FieldLabel { text: "Losses"; width: 65px; horizontal-alignment: right; }
+                FieldLabel { text: "Gold acquired"; width: 98px; horizontal-alignment: right; }
+                FieldLabel { text: "Food produced"; width: 98px; horizontal-alignment: right; }
+                FieldLabel { text: "Weapons"; width: 86px; horizontal-alignment: right; }
+            }
+            for row[index] in root.rows: Rectangle {
+                height: 35px;
+                background: mod(index, 2) == 0 ? #f8fafc : #ffffff;
+                HorizontalLayout {
+                    padding-left: 8px;
+                    padding-right: 8px;
+                    spacing: 12px;
+                    HistoryText { text: "P" + row.slot; width: 36px; }
+                    Rectangle {
+                        width: 190px;
+                        HistoryName { text: row.name; color-index: row.color-index; width: parent.width; height: parent.height; }
+                        TouchArea { enabled: row.steam-id != ""; mouse-cursor: pointer; clicked => { root.open-player(row.steam-id); } }
+                    }
+                    SteamIdLink { steam-id: row.steam-id; width: 168px; open-profile(id) => { root.open-profile(id); } }
+                    HistoryText { text: row.team; width: 58px; }
+                    HistoryText { text: row.gold; width: 70px; horizontal-alignment: right; }
+                    HistoryText { text: row.population; width: 70px; horizontal-alignment: right; }
+                    HistoryText { text: row.army; width: 65px; horizontal-alignment: right; }
+                    HistoryText { text: row.kills; width: 65px; horizontal-alignment: right; }
+                    HistoryText { text: row.losses; width: 65px; horizontal-alignment: right; }
+                    HistoryText { text: row.acquired-gold; width: 98px; horizontal-alignment: right; }
+                    HistoryText { text: row.food-produced; width: 98px; horizontal-alignment: right; }
+                    HistoryText { text: row.weapons-produced; width: 86px; horizontal-alignment: right; }
+                }
+            }
+        }
+    }
+}
+
+component HistoryWorkspace inherits Rectangle {
+    in property <int> view;
+    in-out property <string> search;
+    in-out property <int> filter: 0;
+    in property <[HistoryGameUiRow]> games;
+    in property <[JournalPlayerUiRow]> players;
+    in property <string> list-status;
+    in property <string> detail-title;
+    in property <string> detail-summary;
+    private property <bool> details-expanded: false;
+    in property <[HistoryFieldUiRow]> detail-fields;
+    in property <[HistoryRosterUiRow]> roster;
+    in property <[string]> known-names;
+    in property <[HistoryGameUiRow]> player-games;
+    in property <string> detail-steam-id;
+    callback show(int);
+    callback search-changed(string);
+    callback filter-changed(int);
+    callback open-game(string);
+    callback open-player(string);
+    callback open-profile(string);
+    callback refresh();
+    background: #ffffff;
+    border-color: #dde3ee;
+    border-width: 1px;
+    border-radius: 6px;
+    VerticalLayout {
+        padding: 14px;
+        spacing: 10px;
+        HorizontalLayout {
+            height: 30px;
+            spacing: 10px;
+            Button {
+                text: root.view == 3 ? "‹ Games" : root.view == 4 ? "‹ Players" : "‹ SteamID";
+                width: 100px;
+                clicked => { root.show(root.view == 3 ? 1 : root.view == 4 ? 2 : 0); }
+            }
+            Text {
+                text: root.view == 1 ? "Recorded games" : root.view == 2 ? "Player journal" : root.detail-title;
+                color: #111827;
+                font-size: 16px;
+                font-weight: 800;
+                vertical-alignment: center;
+                overflow: elide;
+                horizontal-stretch: 1;
+            }
+            Button { text: "Refresh"; width: 80px; clicked => { root.refresh(); } }
+        }
+        if root.view == 1 || root.view == 2: HorizontalLayout {
+            height: 30px;
+            spacing: 8px;
+            LineEdit {
+                text <=> root.search;
+                horizontal-stretch: 1;
+                placeholder-text: root.view == 1 ? "Search map, player nickname or SteamID…" : "Search every recorded nickname or SteamID…";
+                edited(value) => { root.search-changed(value); }
+            }
+            Button {
+                text: "Clear";
+                width: 64px;
+                enabled: root.search != "";
+                clicked => { root.search = ""; root.search-changed(""); }
+            }
+        }
+        if root.view == 1: HorizontalLayout {
+            height: 28px;
+            spacing: 6px;
+            for label[index] in ["All", "Finished", "Interrupted", "Recording"]: SettingsTabButton {
+                text: label;
+                box_width: 102px;
+                selected: root.filter == index;
+                clicked => { root.filter = index; root.filter-changed(index); }
+            }
+            Rectangle { horizontal-stretch: 1; }
+        }
+        if root.view == 1: HistoryGamesTable { rows: root.games; open-game(id) => { root.open-game(id); } }
+        if root.view == 2: JournalPlayersTable {
+            rows: root.players;
+            open-player(id) => { root.open-player(id); }
+            open-profile(id) => { root.open-profile(id); }
+        }
+        if root.view == 3: ScrollView {
+            VerticalLayout {
+                spacing: 12px;
+                alignment: start;
+                HistoryText { text: root.detail-summary; wrap: word-wrap; height: 42px; }
+                FieldLabel { text: "Recorded roster and statistics"; height: 25px; }
+                HistoryRosterTable {
+                    rows: root.roster;
+                    open-player(id) => { root.open-player(id); }
+                    open-profile(id) => { root.open-profile(id); }
+                }
+                Button {
+                    text: root.details-expanded ? "Hide setup and recording details" : "Show setup and recording details";
+                    height: 28px;
+                    clicked => { root.details-expanded = !root.details-expanded; }
+                }
+                if root.details-expanded: HistoryFields { fields: root.detail-fields; open-profile(id) => { root.open-profile(id); } }
+            }
+        }
+        if root.view == 4: ScrollView {
+            VerticalLayout {
+                spacing: 12px;
+                alignment: start;
+                HorizontalLayout {
+                    height: 30px;
+                    spacing: 10px;
+                    FieldLabel { text: "SteamID64"; width: 90px; }
+                    SteamIdLink { steam-id: root.detail-steam-id; width: 168px; open-profile(id) => { root.open-profile(id); } }
+                    Rectangle { horizontal-stretch: 1; }
+                }
+                HistoryText { text: root.detail-summary; wrap: word-wrap; height: 42px; }
+                FieldLabel { text: "All recorded nicknames"; height: 25px; }
+                for name in root.known-names: HistoryText { text: name; height: 25px; }
+                FieldLabel { text: "Recorded games with this player"; height: 25px; }
+                HistoryGamesTable {
+                    height: max(120px, min(450px, root.player-games.length * 47px + 40px));
+                    rows: root.player-games;
+                    open-game(id) => { root.open-game(id); }
+                }
+                Button {
+                    text: root.details-expanded ? "Hide player statistics" : "Show player statistics";
+                    height: 28px;
+                    clicked => { root.details-expanded = !root.details-expanded; }
+                }
+                if root.details-expanded: HistoryFields { fields: root.detail-fields; open-profile(id) => { root.open-profile(id); } }
+            }
+        }
+        HistoryText { text: root.list-status; color: #647084; height: 22px; }
+    }
+}
+
 export component AppWindow inherits Window {
     in-out property <string> player1_name: "Player 1";
     in-out property <string> player2_name: "Player 2";
@@ -823,6 +1391,25 @@ export component AppWindow inherits Window {
     in-out property <bool> shooter_count_slingers: false;
     in property <string> process_status: "";
     in property <[PlayerUiRow]> player_rows;
+    in property <[SteamIdUiRow]> steam_id_rows;
+    in property <string> steam_id_status: "Refresh to read the current multiplayer players.";
+    in-out property <int> history_view: 0;
+    in-out property <string> history_search;
+    in-out property <int> history_filter: 0;
+    in property <string> history_status;
+    in property <string> history_list_status;
+    in property <[HistoryGameUiRow]> game_history_rows;
+    in property <[JournalPlayerUiRow]> player_journal_rows;
+    in property <string> history_detail_title;
+    in property <string> history_detail_summary;
+    in property <string> history_current_summary;
+    in property <[HistoryFieldUiRow]> history_detail_fields;
+    in property <[HistoryRosterUiRow]> history_roster_rows;
+    in property <[string]> history_player_names;
+    in property <[HistoryGameUiRow]> history_player_games;
+    in property <string> history_detail_steam_id;
+    in property <bool> history_import_pending: false;
+    in property <string> history_import_preview;
 
     callback show_overlay();
     callback hide_overlay();
@@ -835,6 +1422,21 @@ export component AppWindow inherits Window {
     callback request_admin_ui_player(int);
     callback reattach_game();
     callback import_multiplayer_players();
+    callback refresh_steam_ids();
+    callback open_steam_profile(int, string);
+    callback history_show(int);
+    callback history_search_changed(string);
+    callback history_filter_changed(int);
+    callback history_open_game(string);
+    callback history_open_player(string);
+    callback history_open_player_profile(string);
+    callback history_rebuild_players();
+    callback history_refresh();
+    callback history_open_folder();
+    callback history_export();
+    callback history_import();
+    callback history_confirm_import();
+    callback history_cancel_import();
     in property <string> player_import_status: "Click to load multiplayer names and colors. Manual edits remain available.";
 
     title: "Stronghold Crusader DE, Monitor";
@@ -1014,20 +1616,30 @@ export component AppWindow inherits Window {
                             SettingsTabButton {
                                 text: "Overlay settings";
                                 selected: root.settings_tab == 0;
-                                box_width: 167px;
+                                box_width: root.admin_mode ? 123px : 167px;
                                 clicked => { root.settings_tab = 0; }
                             }
                             SettingsTabButton {
                                 text: "Game ticks timer";
                                 selected: root.settings_tab == 1;
-                                box_width: 167px;
+                                box_width: root.admin_mode ? 123px : 167px;
                                 clicked => { root.settings_tab = 1; }
                             }
                             if root.admin_mode: SettingsTabButton {
                                 text: "Admin panel";
                                 selected: root.settings_tab == 2;
-                                box_width: 167px;
+                                box_width: 123px;
                                 clicked => { root.settings_tab = 2; }
+                            }
+                            if root.admin_mode: SettingsTabButton {
+                                text: "SteamID";
+                                selected: root.settings_tab == 3;
+                                box_width: 123px;
+                                clicked => {
+                                    root.settings_tab = 3;
+                                    root.history_show(0);
+                                    root.refresh_steam_ids();
+                                }
                             }
                         }
 
@@ -1350,6 +1962,32 @@ export component AppWindow inherits Window {
                                 }
                             }
                         }
+                        if root.settings_tab == 3 && root.admin_mode: VerticalLayout {
+                            spacing: 12px;
+                            Text {
+                                text: "Steam player IDs";
+                                color: #111827;
+                                font-size: 14px;
+                                font-weight: 800;
+                            }
+                            Text {
+                                text: "SteamID64 and profile links for players in the current or last multiplayer match.";
+                                color: #4b5563;
+                                font-size: 12px;
+                                wrap: word-wrap;
+                            }
+                            Button {
+                                text: "Refresh Steam IDs";
+                                height: 28px;
+                                clicked => { root.refresh_steam_ids(); }
+                            }
+                            Text {
+                                text: root.steam_id_status;
+                                color: #647084;
+                                font-size: 12px;
+                                wrap: word-wrap;
+                            }
+                        }
                     }
                 }
             }
@@ -1359,10 +1997,104 @@ export component AppWindow inherits Window {
                 vertical-stretch: 1;
                 clip: true;
 
-                PlayerTable {
+                if !(root.settings_tab == 3 && root.admin_mode): PlayerTable {
                     player_rows: root.player_rows;
                     width: parent.width;
                     height: parent.height;
+                }
+                if root.settings_tab == 3 && root.admin_mode: VerticalLayout {
+                    width: parent.width;
+                    height: parent.height;
+                    spacing: 10px;
+                    if root.history_view == 0: SteamIdTable {
+                        rows: root.steam_id_rows;
+                        status: root.steam_id_status;
+                        open-profile(player-id, steam-id) => { root.open_steam_profile(player-id, steam-id); }
+                    }
+                    if root.history_view != 0: HistoryWorkspace {
+                        view: root.history_view;
+                        search <=> root.history_search;
+                        filter <=> root.history_filter;
+                        games: root.game_history_rows;
+                        players: root.player_journal_rows;
+                        list-status: root.history_list_status;
+                        detail-title: root.history_detail_title;
+                        detail-summary: root.history_detail_summary;
+                        detail-fields: root.history_detail_fields;
+                        roster: root.history_roster_rows;
+                        known-names: root.history_player_names;
+                        player-games: root.history_player_games;
+                        detail-steam-id: root.history_detail_steam_id;
+                        show(view) => { root.history_show(view); }
+                        search-changed(value) => { root.history_search_changed(value); }
+                        filter-changed(value) => { root.history_filter_changed(value); }
+                        open-game(id) => { root.history_open_game(id); }
+                        open-player(id) => { root.history_open_player(id); }
+                        open-profile(id) => { root.history_open_player_profile(id); }
+                        refresh => { root.history_refresh(); }
+                    }
+                    if root.history_view == 0 && root.history_current_summary != "": Text {
+                        text: root.history_current_summary;
+                        color: #4b5563;
+                        font-size: 12px;
+                        wrap: word-wrap;
+                        height: min(76px, self.preferred-height + 6px);
+                        overflow: elide;
+                    }
+                    Rectangle {
+                        height: 116px;
+                        border-radius: 6px;
+                        background: #ffffff;
+                        border-color: #dde3ee;
+                        border-width: 1px;
+                        VerticalLayout {
+                            padding: 10px;
+                            spacing: 8px;
+                            HorizontalLayout {
+                                height: 28px;
+                                spacing: 8px;
+                                Button { text: "Update player journal"; width: 176px; clicked => { root.history_rebuild_players(); } }
+                                Button { text: "Games"; width: 72px; clicked => { root.history_show(1); } }
+                                Button { text: "Players"; width: 72px; clicked => { root.history_show(2); } }
+                                if root.history_view != 0: Button { text: "SteamID"; width: 80px; clicked => { root.history_show(0); } }
+                                Rectangle { horizontal-stretch: 1; }
+                            }
+                            HorizontalLayout {
+                                height: 28px;
+                                spacing: 8px;
+                                Button { text: "Export games…"; width: 116px; clicked => { root.history_export(); } }
+                                Button { text: "Import games…"; width: 116px; clicked => { root.history_import(); } }
+                                Button { text: "Open games folder"; width: 142px; clicked => { root.history_open_folder(); } }
+                                Rectangle { horizontal-stretch: 1; }
+                            }
+                            HistoryText { text: root.history_status; color: #647084; height: 20px; }
+                        }
+                    }
+                    if root.history_import_pending: Rectangle {
+                        height: 142px;
+                        background: #fff8e8;
+                        border-width: 1px;
+                        border-color: #e1c78e;
+                        border-radius: 6px;
+                        VerticalLayout {
+                            padding: 10px;
+                            spacing: 8px;
+                            Text {
+                                text: root.history_import_preview;
+                                color: #614b20;
+                                font-size: 12px;
+                                wrap: word-wrap;
+                                vertical-stretch: 1;
+                            }
+                            HorizontalLayout {
+                                height: 28px;
+                                spacing: 8px;
+                                Button { text: "Apply import"; width: 120px; clicked => { root.history_confirm_import(); } }
+                                Button { text: "Cancel"; width: 90px; clicked => { root.history_cancel_import(); } }
+                                Rectangle { horizontal-stretch: 1; }
+                            }
+                        }
+                    }
                 }
             }
         }

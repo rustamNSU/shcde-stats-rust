@@ -114,8 +114,8 @@ impl AppConfig {
         self.timer.font_size = self.timer.font_size.clamp(10.0, 28.0);
         self.timer.panel_opacity = self.timer.panel_opacity.clamp(0.25, 1.0);
         self.timer.game_speed = quantized_game_speed(self.timer.game_speed);
-        self.settings_tab = self.settings_tab.clamp(0, 2);
-        if !self.admin_mode_enabled() && self.settings_tab == 2 {
+        self.settings_tab = self.settings_tab.clamp(0, 3);
+        if !self.admin_mode_enabled() && self.settings_tab >= 2 {
             self.settings_tab = 0;
         }
 
@@ -351,4 +351,31 @@ fn quantized_game_speed(value: f32) -> f32 {
 
 fn is_usable_screen_coordinate(value: i32) -> bool {
     (-10_000..=30_000).contains(&value)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn saved_admin_tabs_require_a_valid_admin_key() {
+        for tab in [2, 3, 100] {
+            for password in [None, Some("invalid-key".to_owned())] {
+                let mut config = AppConfig {
+                    settings_tab: tab,
+                    admin_password: password,
+                    ..AppConfig::default()
+                };
+                config.normalize();
+                assert_eq!(config.settings_tab, 0);
+                assert!(!config.admin_mode_enabled());
+            }
+        }
+        let mut config = AppConfig {
+            settings_tab: 1,
+            ..AppConfig::default()
+        };
+        config.normalize();
+        assert_eq!(config.settings_tab, 1);
+    }
 }
