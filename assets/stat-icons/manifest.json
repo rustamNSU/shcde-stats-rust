@@ -1,0 +1,387 @@
+{
+  "viewBox": "0 0 24 24",
+  "strokeWidth": 1.8,
+  "style": "monochrome-outline",
+  "totalMark": "A small plus denotes the acquired/produced total, not current stock.",
+  "icons": [
+    {
+      "id": "gold",
+      "label": "Gold",
+      "group": "Economy",
+      "file": "gold.svg",
+      "fields": [
+        "gold"
+      ]
+    },
+    {
+      "id": "population",
+      "label": "Population",
+      "group": "Economy",
+      "file": "population.svg",
+      "fields": [
+        "population"
+      ]
+    },
+    {
+      "id": "food-stock",
+      "label": "Food stock",
+      "group": "Economy",
+      "file": "food-stock.svg",
+      "fields": [
+        "food-stock"
+      ]
+    },
+    {
+      "id": "food-ration",
+      "label": "Food popularity effect",
+      "group": "Economy",
+      "file": "food-ration.svg",
+      "fields": [
+        "food-ratio-text"
+      ]
+    },
+    {
+      "id": "tax",
+      "label": "Tax popularity effect",
+      "group": "Economy",
+      "file": "tax.svg",
+      "fields": [
+        "tax-text"
+      ]
+    },
+    {
+      "id": "popularity",
+      "label": "Popularity",
+      "group": "Economy",
+      "file": "popularity.svg",
+      "fields": [
+        "popularity",
+        "popularity-text"
+      ]
+    },
+    {
+      "id": "fear-factor",
+      "label": "Fear factor",
+      "group": "Economy",
+      "file": "fear-factor.svg",
+      "fields": [
+        "ff",
+        "ff-text"
+      ]
+    },
+    {
+      "id": "wood",
+      "label": "Wood",
+      "group": "Economy",
+      "file": "wood.svg",
+      "fields": [
+        "wood"
+      ]
+    },
+    {
+      "id": "stone",
+      "label": "Stone",
+      "group": "Economy",
+      "file": "stone.svg",
+      "fields": [
+        "stone"
+      ]
+    },
+    {
+      "id": "army",
+      "label": "Army",
+      "group": "Army",
+      "file": "army.svg",
+      "fields": [
+        "army"
+      ]
+    },
+    {
+      "id": "horse-archer",
+      "label": "Horse archers",
+      "group": "Army",
+      "file": "horse-archer.svg",
+      "fields": [
+        "ha"
+      ]
+    },
+    {
+      "id": "camel-lancer",
+      "label": "Camel lancers",
+      "group": "Army",
+      "file": "camel-lancer.svg",
+      "fields": [
+        "camel-lancers"
+      ]
+    },
+    {
+      "id": "knight",
+      "label": "Knights",
+      "group": "Army",
+      "file": "knight.svg",
+      "fields": [
+        "knights"
+      ]
+    },
+    {
+      "id": "shooters",
+      "label": "Shooters",
+      "group": "Army",
+      "file": "shooters.svg",
+      "fields": [
+        "shooters"
+      ]
+    },
+    {
+      "id": "archer",
+      "label": "Archers",
+      "group": "Army",
+      "file": "archer.svg",
+      "fields": [
+        "archers"
+      ]
+    },
+    {
+      "id": "arabian-archer",
+      "label": "Arabian archers",
+      "group": "Army",
+      "file": "arabian-archer.svg",
+      "fields": [
+        "arab-bows"
+      ]
+    },
+    {
+      "id": "crossbowman",
+      "label": "Crossbowmen",
+      "group": "Army",
+      "file": "crossbowman.svg",
+      "fields": [
+        "xbows"
+      ]
+    },
+    {
+      "id": "skirmisher",
+      "label": "Skirmishers",
+      "group": "Army",
+      "file": "skirmisher.svg",
+      "fields": [
+        "skirmishers"
+      ]
+    },
+    {
+      "id": "slinger",
+      "label": "Slingers",
+      "group": "Army",
+      "file": "slinger.svg",
+      "fields": [
+        "slingers"
+      ]
+    },
+    {
+      "id": "portable-shield",
+      "label": "Portable shields",
+      "group": "Army",
+      "file": "portable-shield.svg",
+      "fields": [
+        "shields"
+      ]
+    },
+    {
+      "id": "catapult",
+      "label": "Catapults",
+      "group": "Army",
+      "file": "catapult.svg",
+      "fields": [
+        "catapults"
+      ]
+    },
+    {
+      "id": "army-killed",
+      "label": "Enemy army killed",
+      "group": "Army",
+      "file": "army-killed.svg",
+      "fields": [
+        "army-killed"
+      ]
+    },
+    {
+      "id": "army-lost",
+      "label": "Own army lost",
+      "group": "Army",
+      "file": "army-lost.svg",
+      "fields": [
+        "army-lost"
+      ]
+    },
+    {
+      "id": "gold-acquired",
+      "label": "Gold acquired",
+      "group": "Totals",
+      "file": "gold-acquired.svg",
+      "fields": [
+        "stat-gold-earned",
+        "acquired-gold-text"
+      ]
+    },
+    {
+      "id": "food-produced",
+      "label": "Food produced",
+      "group": "Totals",
+      "file": "food-produced.svg",
+      "fields": [
+        "stat-food-produced",
+        "produced-food-text"
+      ]
+    },
+    {
+      "id": "weapons-produced",
+      "label": "Weapons produced",
+      "group": "Totals",
+      "file": "weapons-produced.svg",
+      "fields": [
+        "stat-weapons-produced",
+        "produced-weapons-text"
+      ]
+    },
+    {
+      "id": "wood-produced",
+      "label": "Wood produced",
+      "group": "Totals",
+      "file": "wood-produced.svg",
+      "fields": [
+        "stat-wood-produced",
+        "produced-wood-text"
+      ]
+    },
+    {
+      "id": "stone-produced",
+      "label": "Stone produced",
+      "group": "Totals",
+      "file": "stone-produced.svg",
+      "fields": [
+        "stat-stone-produced",
+        "produced-stone-text"
+      ]
+    },
+    {
+      "id": "iron-produced",
+      "label": "Iron produced",
+      "group": "Totals",
+      "file": "iron-produced.svg",
+      "fields": [
+        "stat-iron-produced",
+        "produced-iron-text"
+      ]
+    },
+    {
+      "id": "workshop",
+      "label": "Workshops",
+      "group": "Buildings",
+      "file": "workshop.svg",
+      "fields": [
+        "workshops"
+      ]
+    },
+    {
+      "id": "fletcher",
+      "label": "Fletchers",
+      "group": "Buildings",
+      "file": "fletcher.svg",
+      "fields": [
+        "fletchers-count"
+      ]
+    },
+    {
+      "id": "poleturner",
+      "label": "Poleturners",
+      "group": "Buildings",
+      "file": "poleturner.svg",
+      "fields": [
+        "poleturners-count"
+      ]
+    },
+    {
+      "id": "armourer",
+      "label": "Armourers",
+      "group": "Buildings",
+      "file": "armourer.svg",
+      "fields": [
+        "armourers-count"
+      ]
+    },
+    {
+      "id": "blacksmith",
+      "label": "Blacksmiths",
+      "group": "Buildings",
+      "file": "blacksmith.svg",
+      "fields": [
+        "blacksmiths-count"
+      ]
+    },
+    {
+      "id": "baker",
+      "label": "Bakers",
+      "group": "Buildings",
+      "file": "baker.svg",
+      "fields": [
+        "bakers-count"
+      ]
+    },
+    {
+      "id": "mill",
+      "label": "Mills",
+      "group": "Buildings",
+      "file": "mill.svg",
+      "fields": [
+        "mills-count"
+      ]
+    },
+    {
+      "id": "woodcutter",
+      "label": "Woodcutters",
+      "group": "Buildings",
+      "file": "woodcutter.svg",
+      "fields": [
+        "woodcutters-count"
+      ]
+    },
+    {
+      "id": "ticks",
+      "label": "Game ticks",
+      "group": "Time",
+      "file": "ticks.svg",
+      "fields": [
+        "ticks-text"
+      ]
+    },
+    {
+      "id": "calendar",
+      "label": "Game date",
+      "group": "Time",
+      "file": "calendar.svg",
+      "fields": [
+        "day-text",
+        "month-text",
+        "year-text"
+      ]
+    },
+    {
+      "id": "elapsed-time",
+      "label": "Elapsed time",
+      "group": "Time",
+      "file": "elapsed-time.svg",
+      "fields": [
+        "elapsed-text"
+      ]
+    },
+    {
+      "id": "game-speed",
+      "label": "Game speed",
+      "group": "Time",
+      "file": "game-speed.svg",
+      "fields": [
+        "game-speed-text"
+      ]
+    }
+  ]
+}

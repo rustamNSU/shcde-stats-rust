@@ -1,0 +1,104 @@
+{
+  "status": "approved",
+  "intendedUse": "Floating overlay column headers only, with icon before text.",
+  "viewBox": "0 0 24 24",
+  "style": "simple-colored-pictograms",
+  "slintNote": "Preserve intrinsic colors: do not apply Image.colorize. Bind square size to the label font size.",
+  "icons": [
+    {
+      "id": "gold",
+      "label": "Gold",
+      "file": "gold.svg"
+    },
+    {
+      "id": "population",
+      "label": "Population",
+      "file": "population.svg"
+    },
+    {
+      "id": "army",
+      "label": "Army",
+      "file": "army.svg"
+    },
+    {
+      "id": "food-ration",
+      "label": "Food",
+      "file": "food-ration.svg"
+    },
+    {
+      "id": "tax",
+      "label": "Tax",
+      "file": "tax.svg"
+    },
+    {
+      "id": "popularity",
+      "label": "Popularity",
+      "file": "popularity.svg"
+    },
+    {
+      "id": "fear-factor",
+      "label": "Fear factor",
+      "file": "fear-factor.svg"
+    },
+    {
+      "id": "horse-archer",
+      "label": "Horse archers",
+      "file": "horse-archer.svg"
+    },
+    {
+      "id": "camel-lancer",
+      "label": "Camel lancers",
+      "file": "camel-lancer.svg"
+    },
+    {
+      "id": "knight",
+      "label": "Knights",
+      "file": "knight.svg"
+    },
+    {
+      "id": "shooters",
+      "label": "Shooters",
+      "file": "shooters.svg"
+    },
+    {
+      "id": "army-killed",
+      "label": "Army killed",
+      "file": "army-killed.svg"
+    },
+    {
+      "id": "army-lost",
+      "label": "Army lost",
+      "file": "army-lost.svg"
+    },
+    {
+      "id": "gold-acquired",
+      "label": "Acquired gold",
+      "file": "gold-acquired.svg"
+    },
+    {
+      "id": "food-produced",
+      "label": "Produced food",
+      "file": "food-produced.svg"
+    },
+    {
+      "id": "weapons-produced",
+      "label": "Produced weapons",
+      "file": "weapons-produced.svg"
+    },
+    {
+      "id": "wood-produced",
+      "label": "Produced wood",
+      "file": "wood-produced.svg"
+    },
+    {
+      "id": "stone-produced",
+      "label": "Produced stone",
+      "file": "stone-produced.svg"
+    },
+    {
+      "id": "iron-produced",
+      "label": "Produced iron",
+      "file": "iron-produced.svg"
+    }
+  ]
+}

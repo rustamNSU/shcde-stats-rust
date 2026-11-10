@@ -4,6 +4,7 @@ mod config;
 mod engine;
 mod history;
 mod obfuscation;
+mod overlay_columns;
 mod ui;
 
 use std::cell::RefCell;
@@ -32,6 +33,7 @@ fn main() -> Result<(), slint::PlatformError> {
     apply_config(&app, &config);
     apply_window_positions(&app, &overlay, &timer_window, &config);
     let config_state = Rc::new(RefCell::new(config));
+    ui::overlay_editor::install(&app, &overlay, config_state.clone());
 
     app.set_process_status("Read-only. Looking for SHC:DE process.".into());
 
@@ -82,6 +84,7 @@ fn main() -> Result<(), slint::PlatformError> {
                     return CloseRequestResponse::KeepWindowShown;
                 }
                 save_current_config(&config_state, &app, &overlay, &timer_window);
+                overlay.invoke_cancel_column_drag();
                 overlay.hide().ok();
                 timer_window.hide().ok();
                 admin_window.hide().ok();
@@ -120,6 +123,7 @@ fn main() -> Result<(), slint::PlatformError> {
                 (app.upgrade(), overlay.upgrade(), timer_window.upgrade())
             {
                 save_current_config(&config_state, &app, &overlay, &timer_window);
+                overlay.invoke_cancel_column_drag();
                 overlay.hide().ok();
             }
         }
@@ -296,6 +300,7 @@ fn main() -> Result<(), slint::PlatformError> {
                 (app.upgrade(), overlay.upgrade(), timer_window.upgrade())
             {
                 save_current_config(&config_state, &app, &overlay, &timer_window);
+                overlay.invoke_cancel_column_drag();
                 overlay.hide().ok();
             }
         }
@@ -642,6 +647,11 @@ fn collect_config(
             font_size: app.get_overlay_font_size(),
             heavy_read_ms: app.get_heavy_refresh_interval_ms(),
             movable_frame: app.get_overlay_frame(),
+            column_order: overlay
+                .get_column_order()
+                .iter()
+                .map(|key| key.to_string())
+                .collect(),
         },
         timer: config::TimerSettings {
             panel_opacity: app.get_timer_panel_opacity(),
@@ -917,58 +927,14 @@ fn set_overlay_rows(overlay: &OverlayWindow, rows: &[PlayerUiRow]) {
 }
 
 fn sync_overlay_settings(app: &AppWindow, overlay: &OverlayWindow) {
-    let visible = visible_players(app);
-    let (width, height) = overlay_size(
-        visible.iter().filter(|visible| **visible).count(),
-        app.get_show_gold(),
-        app.get_show_population(),
-        app.get_show_army(),
-        app.get_show_food_effect(),
-        app.get_show_tax_effect(),
-        app.get_show_ha(),
-        app.get_show_cl(),
-        app.get_show_shooters(),
-        app.get_show_acq_gold(),
-        app.get_show_prod_food(),
-        app.get_show_prod_weapons(),
-        app.get_show_prod_stone(),
-        app.get_show_prod_iron(),
-        app.get_show_prod_wood(),
-        app.get_show_total_effect(),
-        app.get_show_knights(),
-        app.get_show_ff(),
-        app.get_show_army_killed(),
-        app.get_show_army_lost(),
-        app.get_overlay_font_size(),
-    );
-
     overlay.set_tournament_title(app.get_tournament_title());
     overlay.set_match_label(app.get_match_label());
     overlay.set_panel_opacity(app.get_panel_opacity());
     overlay.set_overlay_font_size(app.get_overlay_font_size());
     overlay.set_overlay_frame(app.get_overlay_frame());
     overlay.set_pin_on_top(app.get_pin_on_top());
-    overlay.set_show_gold(app.get_show_gold());
-    overlay.set_show_population(app.get_show_population());
-    overlay.set_show_army(app.get_show_army());
-    overlay.set_show_food_effect(app.get_show_food_effect());
-    overlay.set_show_tax_effect(app.get_show_tax_effect());
-    overlay.set_show_ha(app.get_show_ha());
-    overlay.set_show_cl(app.get_show_cl());
-    overlay.set_show_shooters(app.get_show_shooters());
-    overlay.set_show_acq_gold(app.get_show_acq_gold());
-    overlay.set_show_prod_food(app.get_show_prod_food());
-    overlay.set_show_prod_weapons(app.get_show_prod_weapons());
-    overlay.set_show_prod_stone(app.get_show_prod_stone());
-    overlay.set_show_prod_iron(app.get_show_prod_iron());
-    overlay.set_show_prod_wood(app.get_show_prod_wood());
-    overlay.set_show_total_effect(app.get_show_total_effect());
-    overlay.set_show_knights(app.get_show_knights());
-    overlay.set_show_ff(app.get_show_ff());
-    overlay.set_show_army_killed(app.get_show_army_killed());
-    overlay.set_show_army_lost(app.get_show_army_lost());
-    overlay.set_overlay_width(width);
-    overlay.set_overlay_height(height);
+    let rows: Vec<_> = overlay.get_player_rows().iter().collect();
+    ui::overlay_editor::sync(overlay, app, &rows);
 }
 
 fn sync_timer_settings(app: &AppWindow, timer_window: &TimerWindow, snapshot: &GameSnapshot) {
@@ -1089,112 +1055,6 @@ fn month_text(month: u32) -> &'static str {
         11 => "Dec",
         _ => "---",
     }
-}
-
-fn overlay_size(
-    visible_player_count: usize,
-    show_gold: bool,
-    show_population: bool,
-    show_army: bool,
-    show_food_effect: bool,
-    show_tax_effect: bool,
-    show_ha: bool,
-    show_cl: bool,
-    show_shooters: bool,
-    show_acq_gold: bool,
-    show_prod_food: bool,
-    show_prod_weapons: bool,
-    show_prod_stone: bool,
-    show_prod_iron: bool,
-    show_prod_wood: bool,
-    show_total_effect: bool,
-    show_knights: bool,
-    show_ff: bool,
-    show_army_killed: bool,
-    show_army_lost: bool,
-    overlay_font_size: f32,
-) -> (f32, f32) {
-    let mut column_widths = vec![
-        scaled_width(120.0, overlay_font_size, 7.5), // player
-    ];
-
-    if show_gold {
-        column_widths.push(scaled_width(68.0, overlay_font_size, 4.4));
-    }
-    if show_population {
-        column_widths.push(scaled_width(82.0, overlay_font_size, 5.2));
-    }
-    if show_army {
-        column_widths.push(scaled_width(52.0, overlay_font_size, 3.4));
-    }
-    if show_food_effect {
-        column_widths.push(scaled_width(50.0, overlay_font_size, 3.3));
-    }
-    if show_tax_effect {
-        column_widths.push(scaled_width(50.0, overlay_font_size, 3.3));
-    }
-    if show_ha {
-        column_widths.push(scaled_width(42.0, overlay_font_size, 2.8));
-    }
-    if show_cl {
-        column_widths.push(scaled_width(42.0, overlay_font_size, 2.8));
-    }
-    if show_shooters {
-        column_widths.push(scaled_width(58.0, overlay_font_size, 3.8));
-    }
-    if show_acq_gold {
-        column_widths.push(scaled_width(76.0, overlay_font_size, 4.9));
-    }
-    if show_prod_food {
-        column_widths.push(scaled_width(78.0, overlay_font_size, 5.0));
-    }
-    if show_prod_weapons {
-        column_widths.push(scaled_width(78.0, overlay_font_size, 5.0));
-    }
-    if show_prod_stone {
-        column_widths.push(scaled_width(78.0, overlay_font_size, 5.0));
-    }
-    if show_prod_iron {
-        column_widths.push(scaled_width(76.0, overlay_font_size, 4.9));
-    }
-    if show_prod_wood {
-        column_widths.push(scaled_width(78.0, overlay_font_size, 5.0));
-    }
-    if show_total_effect {
-        column_widths.push(scaled_width(80.0, overlay_font_size, 6.0));
-    }
-    if show_knights {
-        column_widths.push(scaled_width(58.0, overlay_font_size, 3.8));
-    }
-    if show_ff {
-        column_widths.push(scaled_width(42.0, overlay_font_size, 2.8));
-    }
-    if show_army_killed {
-        column_widths.push(scaled_width(82.0, overlay_font_size, 5.2));
-    }
-    if show_army_lost {
-        column_widths.push(scaled_width(72.0, overlay_font_size, 4.6));
-    }
-
-    let spacing = 12.0 * (column_widths.len().saturating_sub(1) as f32);
-    let horizontal_padding = 28.0;
-    let border_allowance = 56.0;
-    let width =
-        horizontal_padding + border_allowance + column_widths.into_iter().sum::<f32>() + spacing;
-    let row_count = visible_player_count.max(1);
-    let row_height = (overlay_font_size * 1.9).max(28.0);
-    let header_height = (overlay_font_size * 1.05).max(16.0);
-    let title_height = (overlay_font_size * 1.25).max(24.0);
-    let vertical_padding = 14.0;
-    let spacing = 5.0 * (row_count as f32 + 1.0);
-    let height =
-        vertical_padding + title_height + header_height + row_count as f32 * row_height + spacing;
-
-    (width.max(320.0), height)
-}
-
-fn scaled_width(min_width: f32, font_size: f32, multiplier: f32) -> f32 {
-    min_width.max(font_size * multiplier)
 }
 
 fn cycle_player_color(app: &AppWindow, player_id: i32) {

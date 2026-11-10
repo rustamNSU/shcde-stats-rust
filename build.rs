@@ -1,5 +1,7 @@
 fn main() {
     println!("cargo:rerun-if-changed=ui/app.slint");
+    println!("cargo:rerun-if-changed=ui/overlay-style.slint");
+    println!("cargo:rerun-if-changed=assets/overlay-icons");
     println!("cargo:rerun-if-changed=assets/icon.png");
     println!("cargo:rerun-if-changed=.user");
     println!("cargo:rerun-if-changed=.memory");

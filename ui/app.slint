@@ -1,4 +1,25 @@
 import { Button, CheckBox, LineEdit, ListView, ScrollView, Slider } from "std-widgets.slint";
+import { OverlayStatHeader, OverlayStatValue, OverlayEditorButton } from "overlay-style.slint";
+
+export struct OverlayColumnUi {
+    id: string,
+    title: string,
+    full-title: string,
+    group: string,
+    icon: image,
+    column-width: float,
+}
+
+export struct OverlayCellUi {
+    text: string,
+    value-color: color,
+}
+
+export struct OverlayRowUi {
+    name: string,
+    name-color: color,
+    cells: [OverlayCellUi],
+}
 
 export struct PlayerUiRow {
     visible: bool,
@@ -14,6 +35,7 @@ export struct PlayerUiRow {
     total-effect-text: string,
     popularity-text: string,
     popularity: int,
+    popularity-color: color,
     population: int,
     army: int,
     buildings: int,
@@ -144,177 +166,6 @@ component CompactLabel inherits Text {
     font-weight: 600;
     horizontal-alignment: left;
     vertical-alignment: center;
-}
-
-component OverlayHeaderRow inherits Rectangle {
-    in property <bool> show_gold;
-    in property <bool> show_population;
-    in property <bool> show_army;
-    in property <bool> show_food_effect;
-    in property <bool> show_tax_effect;
-    in property <bool> show_ha;
-    in property <bool> show_cl;
-    in property <bool> show_shooters;
-    in property <bool> show_acq_gold;
-    in property <bool> show_prod_weapons;
-    in property <bool> show_prod_food;
-    in property <bool> show_prod_stone;
-    in property <bool> show_prod_iron;
-    in property <bool> show_prod_wood;
-    in property <bool> show_total_effect;
-    in property <bool> show_knights;
-    in property <bool> show_ff;
-    in property <bool> show_army_killed;
-    in property <bool> show_army_lost;
-    in property <float> overlay_font_size: 16;
-
-    height: max(16px, root.overlay_font_size * 1.05px);
-    background: transparent;
-
-    HorizontalLayout {
-        padding-left: 10px;
-        padding-right: 10px;
-        spacing: 12px;
-
-        CompactLabel {
-            text: "Player";
-            overlay_font_size: root.overlay_font_size;
-            width: max(120px, root.overlay_font_size * 7.5px);
-        }
-
-        if root.show_population: CompactLabel {
-            text: "Pop";
-            overlay_font_size: root.overlay_font_size;
-            width: max(82px, root.overlay_font_size * 5.2px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_food_effect: CompactLabel {
-            text: "Food";
-            overlay_font_size: root.overlay_font_size;
-            width: max(50px, root.overlay_font_size * 3.3px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_tax_effect: CompactLabel {
-            text: "Tax";
-            overlay_font_size: root.overlay_font_size;
-            width: max(50px, root.overlay_font_size * 3.3px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_ff: CompactLabel {
-            text: "FF";
-            overlay_font_size: root.overlay_font_size;
-            width: max(42px, root.overlay_font_size * 2.8px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_total_effect: CompactLabel {
-            text: "Popularity";
-            overlay_font_size: root.overlay_font_size;
-            width: max(80px, root.overlay_font_size * 6.0px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_gold: CompactLabel {
-            text: "Gold";
-            overlay_font_size: root.overlay_font_size;
-            width: max(68px, root.overlay_font_size * 4.4px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_acq_gold: CompactLabel {
-            text: "Acq Gold";
-            overlay_font_size: root.overlay_font_size;
-            width: max(76px, root.overlay_font_size * 4.9px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_ha: CompactLabel {
-            text: "HA";
-            overlay_font_size: root.overlay_font_size;
-            width: max(42px, root.overlay_font_size * 2.8px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_army: CompactLabel {
-            text: "Army";
-            overlay_font_size: root.overlay_font_size;
-            width: max(52px, root.overlay_font_size * 3.4px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_cl: CompactLabel {
-            text: "CL";
-            overlay_font_size: root.overlay_font_size;
-            width: max(42px, root.overlay_font_size * 2.8px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_shooters: CompactLabel {
-            text: "Shooters";
-            overlay_font_size: root.overlay_font_size;
-            width: max(58px, root.overlay_font_size * 3.8px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_knights: CompactLabel {
-            text: "Knights";
-            overlay_font_size: root.overlay_font_size;
-            width: max(58px, root.overlay_font_size * 3.8px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_prod_food: CompactLabel {
-            text: "Prod Food";
-            overlay_font_size: root.overlay_font_size;
-            width: max(78px, root.overlay_font_size * 5.0px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_prod_weapons: CompactLabel {
-            text: "Prod Weap";
-            overlay_font_size: root.overlay_font_size;
-            width: max(78px, root.overlay_font_size * 5.0px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_prod_stone: CompactLabel {
-            text: "Prod Stone";
-            overlay_font_size: root.overlay_font_size;
-            width: max(78px, root.overlay_font_size * 5.0px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_prod_iron: CompactLabel {
-            text: "Prod Iron";
-            overlay_font_size: root.overlay_font_size;
-            width: max(76px, root.overlay_font_size * 4.9px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_prod_wood: CompactLabel {
-            text: "Prod Wood";
-            overlay_font_size: root.overlay_font_size;
-            width: max(78px, root.overlay_font_size * 5.0px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_army_killed: CompactLabel {
-            text: "Army killed";
-            overlay_font_size: root.overlay_font_size;
-            width: max(82px, root.overlay_font_size * 5.2px);
-            horizontal-alignment: right;
-        }
-
-        if root.show_army_lost: CompactLabel {
-            text: "Army lost";
-            overlay_font_size: root.overlay_font_size;
-            width: max(72px, root.overlay_font_size * 4.6px);
-            horizontal-alignment: right;
-        }
-    }
 }
 
 component SettingsRow inherits HorizontalLayout {
@@ -464,173 +315,6 @@ component PlayerConfigRow inherits HorizontalLayout {
                 root.cycle_color();
             }
         }
-    }
-}
-
-component OverlayPlayerRow inherits Rectangle {
-    in property <PlayerUiRow> player_data;
-    in property <bool> show_gold;
-    in property <bool> show_population;
-    in property <bool> show_army;
-    in property <bool> show_food_effect;
-    in property <bool> show_tax_effect;
-    in property <bool> show_ha;
-    in property <bool> show_cl;
-    in property <bool> show_shooters;
-    in property <bool> show_acq_gold;
-    in property <bool> show_prod_weapons;
-    in property <bool> show_prod_food;
-    in property <bool> show_prod_stone;
-    in property <bool> show_prod_iron;
-    in property <bool> show_prod_wood;
-    in property <bool> show_total_effect;
-    in property <bool> show_knights;
-    in property <bool> show_ff;
-    in property <bool> show_army_killed;
-    in property <bool> show_army_lost;
-    in property <float> overlay_font_size: 16;
-
-    height: max(28px, root.overlay_font_size * 1.9px);
-    border-radius: 5px;
-    background: rgba(255, 255, 255, 0.06);
-
-    HorizontalLayout {
-        padding-left: 10px;
-        padding-right: 10px;
-        spacing: 12px;
-
-        Text {
-            text: root.player_data.name;
-            color: root.player_data.color-index == 1 ? #df3b30 :
-                root.player_data.color-index == 2 ? #f28c28 :
-                root.player_data.color-index == 3 ? #f2d447 :
-                root.player_data.color-index == 4 ? #3b6eea :
-                root.player_data.color-index == 5 ? #ffffff :
-                root.player_data.color-index == 6 ? #8e44d7 :
-                root.player_data.color-index == 7 ? #58c7e8 :
-                root.player_data.color-index == 8 ? #33a852 :
-                #f8fafc;
-            font-size: root.overlay_font_size * 1px;
-            font-weight: 800;
-            vertical-alignment: center;
-            width: max(120px, root.overlay_font_size * 7.5px);
-            overflow: elide;
-        }
-
-        if root.show_population: VerticalLayout {
-            width: max(82px, root.overlay_font_size * 5.2px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.population; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_food_effect: VerticalLayout {
-            width: max(50px, root.overlay_font_size * 3.3px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.food-ratio-text; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_tax_effect: VerticalLayout {
-            width: max(50px, root.overlay_font_size * 3.3px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.tax-text; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_ff: VerticalLayout {
-            width: max(42px, root.overlay_font_size * 2.8px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.ff-text; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_total_effect: VerticalLayout {
-            width: max(80px, root.overlay_font_size * 6.0px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.popularity-text; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_gold: VerticalLayout {
-            width: max(68px, root.overlay_font_size * 4.4px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.gold; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_acq_gold: VerticalLayout {
-            width: max(76px, root.overlay_font_size * 4.9px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.stat-gold-earned; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_ha: VerticalLayout {
-            width: max(42px, root.overlay_font_size * 2.8px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.ha; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_army: VerticalLayout {
-            width: max(52px, root.overlay_font_size * 3.4px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.army; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_cl: VerticalLayout {
-            width: max(42px, root.overlay_font_size * 2.8px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.camel-lancers; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_shooters: VerticalLayout {
-            width: max(58px, root.overlay_font_size * 3.8px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.shooters; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_knights: VerticalLayout {
-            width: max(58px, root.overlay_font_size * 3.8px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.knights; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_prod_food: VerticalLayout {
-            width: max(78px, root.overlay_font_size * 5.0px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.stat-food-produced; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_prod_weapons: VerticalLayout {
-            width: max(78px, root.overlay_font_size * 5.0px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.stat-weapons-produced; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_prod_stone: VerticalLayout {
-            width: max(78px, root.overlay_font_size * 5.0px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.stat-stone-produced; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_prod_iron: VerticalLayout {
-            width: max(76px, root.overlay_font_size * 4.9px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.stat-iron-produced; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_prod_wood: VerticalLayout {
-            width: max(78px, root.overlay_font_size * 5.0px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.stat-wood-produced; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_army_killed: VerticalLayout {
-            width: max(82px, root.overlay_font_size * 5.2px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.army-killed; overlay_font_size: root.overlay_font_size; }
-        }
-
-        if root.show_army_lost: VerticalLayout {
-            width: max(72px, root.overlay_font_size * 4.6px);
-            spacing: 0px;
-            CompactValue { text: root.player_data.army-lost; overlay_font_size: root.overlay_font_size; }
-        }
-
     }
 }
 
@@ -2103,67 +1787,129 @@ export component AppWindow inherits Window {
 
 export component OverlayWindow inherits Window {
     in property <[PlayerUiRow]> player_rows;
+    in-out property <[OverlayColumnUi]> columns;
+    in-out property <[OverlayColumnUi]> hidden-columns;
+    in-out property <[OverlayRowUi]> overlay-rows;
+    in-out property <[string]> column-order;
+    in-out property <string> column-signature;
+    in-out property <bool> editing;
+    in-out property <string> selected-column;
+    in-out property <bool> dragging;
+    in-out property <string> drag-label;
+    in-out property <image> drag-icon;
+    in-out property <float> drop-position: -1;
+    in-out property <string> edit-status;
+    in property <float> statistics-width;
+    in property <float> column-gap: 6;
     in property <string> tournament_title: "Title";
     in property <string> match_label: "Description";
     in property <float> panel_opacity: 0.78;
-    in property <float> overlay_font_size: 28;
+    in property <float> overlay_font_size: 16;
     in property <bool> overlay_frame: true;
     in property <bool> pin_on_top: false;
-    in property <bool> show_gold: true;
-    in property <bool> show_population: true;
-    in property <bool> show_army: true;
-    in property <bool> show_food_effect: true;
-    in property <bool> show_tax_effect: true;
-    in property <bool> show_ha: true;
-    in property <bool> show_cl: true;
-    in property <bool> show_shooters: false;
-    in property <bool> show_acq_gold: false;
-    in property <bool> show_prod_weapons: false;
-    in property <bool> show_prod_food: false;
-    in property <bool> show_prod_stone: false;
-    in property <bool> show_prod_iron: false;
-    in property <bool> show_prod_wood: false;
-    in property <bool> show_total_effect: false;
-    in property <bool> show_knights: true;
-    in property <bool> show_ff: false;
-    in property <bool> show_army_killed: false;
-    in property <bool> show_army_lost: false;
-    in property <float> overlay_width: 500;
-    in property <float> overlay_height: 520;
+
+    private property <bool> add-open;
+    private property <length> player-width: max(120px, root.overlay_font_size * 7.5px);
+    private property <length> row-height: max(28px, root.overlay_font_size * 1.9px);
+    private property <length> header-height: max(16px, root.overlay_font_size * 1.05px) + (root.editing ? 18px : 0px);
+    private property <length> table-height: root.header-height + root.overlay-rows.length * (root.row-height + 5px) + 16px;
+    private property <length> ghost-x;
+    private property <string> tooltip-text;
+    private property <length> tooltip-x;
+    private property <length> tooltip-y;
+    private property <bool> tooltip-open;
+    private property <string> pressed-remove-column;
 
     callback hide_overlay();
     callback request_overlay_frame(bool);
+    callback request-editing(bool);
+    callback select-column(string);
+    callback move-column(int);
+    callback set-column-visible(string, bool);
+    callback reset-column-order();
+    callback begin-column-drag(float);
+    callback update-column-drag(float);
+    callback finish-column-drag(float, bool);
+    callback cancel-column-drag();
+    pure callback header-title-at(float) -> string;
+    pure callback header-remove-at(float) -> string;
 
     title: "Stronghold Crusader DE, Monitor";
     icon: @image-url("../assets/icon.png");
     always-on-top: root.pin_on_top;
     no-frame: !root.overlay_frame;
     background: transparent;
-    width: root.overlay_width * 1px;
-    height: root.overlay_height * 1px;
+    width: min(1600px, max(root.editing ? 720px : 430px, root.player-width + root.column-gap * 1px + root.statistics-width * 1px + 14px));
+    height: 14px + max(32px, root.overlay_font_size * 1.8px) + 5px + root.table-height + (root.editing ? 85px : 0px) + (root.editing && root.add-open ? 190px : 0px);
+    forward-focus: editor-focus;
+
+    changed editing => {
+        root.add-open = false;
+        root.pressed-remove-column = "";
+        root.hide-tooltip();
+        if (root.editing) { editor-focus.focus(); }
+    }
+
+    changed column-signature => { root.pressed-remove-column = ""; root.hide-tooltip(); }
+
+    function hide-tooltip() {
+        tooltip-delay.stop();
+        root.tooltip-open = false;
+        root.tooltip-text = "";
+    }
+
+    function queue-tooltip(text: string, x: float, y: float) {
+        if (text == "") {
+            // A delayed leave from the previous cell must not cancel the new cell's card.
+            if ((x == 0 && y == 0) || (abs(root.tooltip-x - x * 1px) < 1px && abs(root.tooltip-y - y * 1px) < 1px)) { root.hide-tooltip(); }
+        } else if (root.editing || root.dragging) {
+            root.hide-tooltip();
+        } else {
+            if (text != root.tooltip-text) {
+                root.tooltip-text = text;
+            }
+            if (!root.tooltip-open && !tooltip-delay.running) { tooltip-delay.start(); }
+            root.tooltip-x = x * 1px;
+            root.tooltip-y = y * 1px;
+        }
+    }
+
+    tooltip-delay := Timer {
+        interval: 400ms;
+        running: false;
+        triggered => {
+            tooltip-delay.stop();
+            root.tooltip-open = root.tooltip-text != "" && !root.editing && !root.dragging;
+        }
+    }
+
+    editor-focus := FocusScope {
+        focus-lost(reason) => { root.pressed-remove-column = ""; root.hide-tooltip(); root.cancel-column-drag(); }
+        key-pressed(event) => {
+            if (event.text == Key.Escape) {
+                root.cancel-column-drag();
+                root.pressed-remove-column = "";
+                root.hide-tooltip();
+                root.add-open = false;
+                return accept;
+            }
+            return reject;
+        }
+    }
 
     Rectangle {
-        background: transparent;
-
-        Rectangle {
-            x: 0px;
-            y: 0px;
-            width: parent.width;
-            height: parent.height;
-            border-radius: 8px;
-            background: rgba(13, 18, 27, root.panel_opacity);
-            border-color: rgba(255, 255, 255, 0.14);
-            border-width: 1px;
-        }
+        border-radius: 8px;
+        background: rgba(13, 18, 27, root.panel_opacity);
+        border-color: rgba(255, 255, 255, 0.14);
+        border-width: 1px;
 
         VerticalLayout {
             padding: 7px;
             spacing: 5px;
 
             HorizontalLayout {
-                height: max(24px, root.overlay_font_size * 1.25px);
+                height: max(32px, root.overlay_font_size * 1.8px);
                 spacing: 5px;
-
                 VerticalLayout {
                     spacing: 0px;
                     Text {
@@ -2180,75 +1926,317 @@ export component OverlayWindow inherits Window {
                         overflow: elide;
                     }
                 }
-
-                Button {
+                OverlayEditorButton {
+                    text: root.editing ? "Done" : "Edit columns";
+                    active: root.editing;
+                    width: 92px;
+                    clicked => { root.request-editing(!root.editing); }
+                }
+                OverlayEditorButton {
                     text: "Hide";
-                    width: 54px;
-                    height: 24px;
-                    clicked => {
-                        root.hide_overlay();
-                    }
+                    width: 50px;
+                    clicked => { root.cancel-column-drag(); root.hide_overlay(); }
                 }
-
-                Button {
+                OverlayEditorButton {
                     text: root.overlay_frame ? "Frame on" : "Frame off";
-                    width: 82px;
-                    height: 24px;
-                    clicked => {
-                        root.request_overlay_frame(!root.overlay_frame);
+                    width: 76px;
+                    clicked => { root.cancel-column-drag(); root.request_overlay_frame(!root.overlay_frame); }
+                }
+            }
+
+            if root.editing: HorizontalLayout {
+                height: 28px;
+                spacing: 6px;
+                OverlayEditorButton {
+                    text: root.add-open ? "Close list" : "+ Add column";
+                    width: 110px;
+                    active: root.add-open;
+                    clicked => { root.cancel-column-drag(); root.add-open = !root.add-open; }
+                }
+                Text {
+                    text: root.selected-column == "" ? "Select a header" : "Selected column";
+                    color: #cbd5e1;
+                    font-size: 11px;
+                    vertical-alignment: center;
+                }
+                OverlayEditorButton {
+                    text: "Move left";
+                    width: 78px;
+                    enabled: root.selected-column != "";
+                    clicked => { root.move-column(-1); }
+                }
+                OverlayEditorButton {
+                    text: "Move right";
+                    width: 78px;
+                    enabled: root.selected-column != "";
+                    clicked => { root.move-column(1); }
+                }
+                OverlayEditorButton {
+                    text: "Hide column";
+                    width: 88px;
+                    enabled: root.selected-column != "";
+                    clicked => { root.set-column-visible(root.selected-column, false); }
+                }
+                OverlayEditorButton {
+                    text: "Reset order";
+                    width: 88px;
+                    clicked => { root.reset-column-order(); }
+                }
+            }
+
+            if root.editing && root.add-open: Rectangle {
+                height: 185px;
+                border-radius: 4px;
+                background: #172231;
+                border-width: 1px;
+                border-color: #465366;
+                VerticalLayout {
+                    padding: 8px;
+                    spacing: 5px;
+                    Text {
+                        height: 18px;
+                        text: root.hidden-columns.length == 0 ? "All statistics are already shown." : "Add after the selected column, or at the end when none is selected.";
+                        color: #cbd5e1;
+                        font-size: 11px;
+                    }
+                    HorizontalLayout {
+                        spacing: 12px;
+                        for category in ["Economy", "Army", "Production"]: VerticalLayout {
+                            spacing: 5px;
+                            Text { text: category; color: #f8fafc; font-size: 12px; font-weight: 700; height: 18px; }
+                            ScrollView {
+                                horizontal-scrollbar-policy: always-off;
+                                VerticalLayout {
+                                    spacing: 0px;
+                                    for column in root.hidden-columns: Rectangle {
+                                        height: column.group == category ? 30px : 0px;
+                                        visible: column.group == category;
+                                        OverlayEditorButton {
+                                            height: 26px;
+                                            text: "+  " + column.full-title;
+                                            clicked => { root.set-column-visible(column.id, true); }
+                                        }
+                                        Image { x: 6px; y: 5px; width: 16px; height: 16px; source: column.icon; image-fit: contain; }
+                                    }
+                                    Rectangle { vertical-stretch: 1; }
+                                }
+                            }
+                        }
                     }
                 }
             }
 
-            OverlayHeaderRow {
-                show_gold: root.show_gold;
-                show_population: root.show_population;
-                show_army: root.show_army;
-                show_food_effect: root.show_food_effect;
-                show_tax_effect: root.show_tax_effect;
-                show_ha: root.show_ha;
-                show_cl: root.show_cl;
-                show_shooters: root.show_shooters;
-                show_acq_gold: root.show_acq_gold;
-                show_prod_weapons: root.show_prod_weapons;
-                show_prod_food: root.show_prod_food;
-                show_prod_stone: root.show_prod_stone;
-                show_prod_iron: root.show_prod_iron;
-                show_prod_wood: root.show_prod_wood;
-                show_total_effect: root.show_total_effect;
-                show_knights: root.show_knights;
-                show_ff: root.show_ff;
-                show_army_killed: root.show_army_killed;
-                show_army_lost: root.show_army_lost;
-                overlay_font_size: root.overlay_font_size;
+            if root.editing: Text {
+                height: 18px;
+                text: "Drag a header to move it. × hides it. Player stays first. Changes save automatically.";
+                color: #b9c7d9;
+                font-size: 11px;
+                vertical-alignment: center;
             }
 
-            for row in root.player_rows: OverlayPlayerRow {
-                player_data: row;
-                show_gold: root.show_gold;
-                show_population: root.show_population;
-                show_army: root.show_army;
-                show_food_effect: root.show_food_effect;
-                show_tax_effect: root.show_tax_effect;
-                show_ha: root.show_ha;
-                show_cl: root.show_cl;
-                show_shooters: root.show_shooters;
-                show_acq_gold: root.show_acq_gold;
-                show_prod_weapons: root.show_prod_weapons;
-                show_prod_food: root.show_prod_food;
-                show_prod_stone: root.show_prod_stone;
-                show_prod_iron: root.show_prod_iron;
-                show_prod_wood: root.show_prod_wood;
-                show_total_effect: root.show_total_effect;
-                show_knights: root.show_knights;
-                show_ff: root.show_ff;
-                show_army_killed: root.show_army_killed;
-                show_army_lost: root.show_army_lost;
-                overlay_font_size: root.overlay_font_size;
+            table := Rectangle {
+                height: root.table-height;
+                clip: true;
+                VerticalLayout {
+                    x: 0px;
+                    y: 0px;
+                    width: root.player-width;
+                    height: root.table-height;
+                    spacing: 5px;
+                    CompactLabel {
+                        text: root.editing ? "Player · fixed" : "Player";
+                        overlay_font_size: root.overlay_font_size;
+                        height: root.header-height;
+                    }
+                    for row in root.overlay-rows: CompactValue {
+                        height: root.row-height;
+                        text: row.name;
+                        color: row.name-color;
+                        horizontal-alignment: left;
+                        overflow: elide;
+                        overlay_font_size: root.overlay_font_size;
+                    }
+                    Rectangle { height: 11px; }
+                }
+
+                statistics := ScrollView {
+                    x: root.player-width + root.column-gap * 1px;
+                    width: parent.width - self.x;
+                    viewport-width: max(self.visible-width, root.statistics-width * 1px);
+                    viewport-height: self.visible-height;
+                    vertical-scrollbar-policy: always-off;
+                    Rectangle {
+                        width: max(statistics.visible-width, root.statistics-width * 1px);
+                        height: statistics.visible-height;
+                        VerticalLayout {
+                            spacing: 5px;
+                            header := Rectangle {
+                                height: root.header-height;
+                                HorizontalLayout {
+                                    spacing: root.column-gap * 1px;
+                                    alignment: start;
+                                    for column in root.columns: Rectangle {
+                                        width: column.column-width * 1px;
+                                        horizontal-stretch: 0;
+                                        border-radius: 3px;
+                                        border-width: root.editing && root.selected-column == column.id ? 1px : 0px;
+                                        border-color: #8da6c5;
+                                        background: root.editing && root.selected-column == column.id ? #28394d : transparent;
+                                        OverlayStatHeader {
+                                            y: root.editing ? 18px : 0px;
+                                            height: parent.height - self.y;
+                                            text: column.title;
+                                            icon: column.icon;
+                                            overlay_font_size: root.overlay_font_size;
+                                        }
+                                        if root.editing: Rectangle {
+                                            x: 4px;
+                                            y: 4px;
+                                            width: 6px;
+                                            height: 10px;
+                                            for dot in [{x: 0, y: 0}, {x: 4, y: 0}, {x: 0, y: 4}, {x: 4, y: 4}, {x: 0, y: 8}, {x: 4, y: 8}]: Rectangle {
+                                                x: dot.x * 1px;
+                                                y: dot.y * 1px;
+                                                width: 2px;
+                                                height: 2px;
+                                                border-radius: 1px;
+                                                background: #8da6c5;
+                                            }
+                                        }
+                                        if root.editing: Rectangle {
+                                            x: parent.width - 18px;
+                                            y: 0px;
+                                            width: 18px;
+                                            height: 18px;
+                                            Text {
+                                                text: "×";
+                                                color: header-touch.has-hover && header-touch.mouse-y < 18px && root.header-remove-at(header-touch.mouse-x / 1px) == column.id ? #f28c88 : #a8b6c8;
+                                                horizontal-alignment: center;
+                                                font-size: 14px;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // This capture surface stays alive while player values refresh.
+                                header-touch := TouchArea {
+                                    height: parent.height;
+                                    mouse-cursor: !root.editing ? MouseCursor.default : self.mouse-y < 18px && root.header-remove-at(self.mouse-x / 1px) != "" ? MouseCursor.pointer : MouseCursor.grab;
+                                    changed has-hover => {
+                                        if (!self.has-hover) {
+                                            root.queue-tooltip("", (self.absolute-position.x + self.mouse-x) / 1px, self.absolute-position.y / 1px);
+                                        }
+                                    }
+                                    pointer-event(event) => {
+                                        if (event.kind == PointerEventKind.move && !root.editing && !self.pressed) {
+                                            if (root.header-title-at(self.mouse-x / 1px) == "") {
+                                                root.hide-tooltip();
+                                            } else {
+                                                root.queue-tooltip(root.header-title-at(self.mouse-x / 1px), (self.absolute-position.x + self.mouse-x) / 1px, self.absolute-position.y / 1px);
+                                            }
+                                        }
+                                        if (event.kind == PointerEventKind.down) { root.hide-tooltip(); }
+                                        if (root.editing && event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                                            editor-focus.focus();
+                                            root.ghost-x = self.mouse-x;
+                                            root.pressed-remove-column = self.mouse-y < 18px ? root.header-remove-at(self.mouse-x / 1px) : "";
+                                            if (root.pressed-remove-column == "") { root.begin-column-drag(self.mouse-x / 1px); }
+                                        }
+                                        if (event.button == PointerEventButton.left && event.kind == PointerEventKind.up) {
+                                            if (root.pressed-remove-column != "") {
+                                                if (self.mouse-y >= 0px && self.mouse-y < 18px && self.mouse-x >= -statistics.viewport-x && self.mouse-x <= -statistics.viewport-x + statistics.visible-width && root.header-remove-at(self.mouse-x / 1px) == root.pressed-remove-column) {
+                                                    root.set-column-visible(root.pressed-remove-column, false);
+                                                }
+                                                root.pressed-remove-column = "";
+                                            } else {
+                                                root.finish-column-drag(self.mouse-x / 1px, self.mouse-y >= 0px && self.mouse-y <= self.height && self.mouse-x >= -statistics.viewport-x && self.mouse-x <= -statistics.viewport-x + statistics.visible-width);
+                                            }
+                                        }
+                                        if (event.kind == PointerEventKind.cancel) { root.pressed-remove-column = ""; root.cancel-column-drag(); }
+                                    }
+                                    moved => {
+                                        if (self.pressed && root.pressed-remove-column == "") {
+                                            root.ghost-x = self.mouse-x;
+                                            root.update-column-drag(self.mouse-x / 1px);
+                                        }
+                                    }
+                                }
+
+
+                                if root.dragging && root.drop-position >= 0: Rectangle {
+                                    x: root.drop-position * 1px;
+                                    width: 2px;
+                                    background: #76d29a;
+                                }
+                                if root.dragging: Rectangle {
+                                    x: max(0px, min(parent.width - self.width, root.ghost-x - 45px));
+                                    y: -3px;
+                                    width: 110px;
+                                    height: root.header-height + 6px;
+                                    border-radius: 4px;
+                                    background: #34485f;
+                                    border-width: 1px;
+                                    border-color: #a5b8cd;
+                                    OverlayStatHeader { x: 6px; width: parent.width - 12px; text: root.drag-label; icon: root.drag-icon; overlay_font_size: root.overlay_font_size; }
+                                }
+                            }
+                            for row in root.overlay-rows: Rectangle {
+                                height: root.row-height;
+                                HorizontalLayout {
+                                    spacing: root.column-gap * 1px;
+                                    alignment: start;
+                                    for cell[index] in row.cells: OverlayStatValue {
+                                        width: root.columns[index].column-width * 1px;
+                                        horizontal-stretch: 0;
+                                        text: cell.text;
+                                        value-color: cell.value-color;
+                                        overlay-font-size: root.overlay_font_size;
+                                        hover-enabled: !root.editing;
+                                        hover-info(text, x, y) => { root.queue-tooltip(text, x, y); }
+                                    }
+                                }
+                            }
+                            Rectangle { vertical-stretch: 1; }
+                        }
+                    }
+                }
+            }
+
+            if root.editing: Text {
+                height: 19px;
+                text: root.edit-status;
+                color: #cbd5e1;
+                font-size: 11px;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+        }
+
+        // This card has no input surface, so it cannot interrupt column dragging.
+        if root.tooltip-open: Rectangle {
+            x: max(4px, min(root.width - self.width - 4px, root.tooltip-x - self.width / 2));
+            y: max(4px, root.tooltip-y - self.height - 5px);
+            width: min(root.width - 8px, tooltip-label.preferred-width + 16px);
+            height: 27px;
+            border-radius: 4px;
+            border-width: 1px;
+            border-color: #718198;
+            background: #233246;
+            tooltip-label := Text {
+                x: 8px;
+                width: parent.width - 16px;
+                height: parent.height;
+                text: root.tooltip-text;
+                color: #f8fafc;
+                font-size: 12px;
+                wrap: no-wrap;
+                overflow: elide;
+                vertical-alignment: center;
             }
         }
     }
 }
+
 
 export component TimerWindow inherits Window {
     in property <float> panel_opacity: 0.78;

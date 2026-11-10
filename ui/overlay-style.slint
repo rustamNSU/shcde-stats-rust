@@ -1,0 +1,114 @@
+export component OverlayStatHeader inherits Rectangle {
+    in property <string> text;
+    in property <image> icon;
+    in property <float> overlay_font_size: 16;
+    private property <length> icon-size: max(12px, root.overlay_font_size * 0.85px);
+    private property <length> label-space: max(1px, root.width - root.icon-size - 7px);
+    private property <length> label-width: min(root.label-space, header-measure.preferred-width);
+    private property <length> label-font: max(9px, root.overlay_font_size * 0.62px) * min(1, root.label-space / max(1px, header-measure.preferred-width));
+
+    background: transparent;
+
+    // Fixed-size measurement stays outside layouts so it cannot widen a column.
+    header-measure := Text {
+        visible: false;
+        text: root.text;
+        font-size: max(9px, root.overlay_font_size * 0.62px);
+        font-weight: 600;
+        wrap: no-wrap;
+        overflow: clip;
+    }
+
+    header-icon := Image {
+        x: root.width - 2px - root.label-width - 3px - self.width;
+        y: (root.height - self.height) / 2;
+        source: root.icon;
+        width: root.icon-size;
+        height: root.icon-size;
+        image-fit: contain;
+    }
+    Text {
+        x: header-icon.x + header-icon.width + 3px;
+        width: root.label-width;
+        height: root.height;
+        text: root.text;
+        color: #cbd5e1;
+        font-size: root.label-font;
+        font-weight: 600;
+        wrap: no-wrap;
+        overflow: clip;
+        horizontal-alignment: right;
+        vertical-alignment: center;
+    }
+}
+
+export component OverlayStatValue inherits Rectangle {
+    in property <string> text;
+    in property <color> value-color: #f8fafc;
+    in property <float> overlay-font-size: 16;
+    in property <bool> hover-enabled: true;
+    out property <float> fitted-font-size: root.overlay-font-size * min(1, max(1px, root.width - 5px) / max(1px, value-measure.preferred-width));
+    callback hover-info(string, float, float);
+
+    value-measure := Text {
+        visible: false;
+        text: root.text;
+        font-size: root.overlay-font-size * 1px;
+        font-weight: 700;
+        wrap: no-wrap;
+        overflow: clip;
+    }
+    Text {
+        x: 2px;
+        width: max(1px, root.width - 4px);
+        height: root.height;
+        text: root.text;
+        color: root.value-color;
+        font-size: root.fitted-font-size * 1px;
+        font-weight: 700;
+        wrap: no-wrap;
+        overflow: clip;
+        horizontal-alignment: right;
+        vertical-alignment: center;
+    }
+    hover := TouchArea {
+        enabled: root.hover-enabled;
+        changed has-hover => {
+            root.hover-info(self.has-hover ? root.text : "", root.absolute-position.x / 1px + root.width / 2px, root.absolute-position.y / 1px);
+        }
+        pointer-event(event) => {
+            if (event.kind == PointerEventKind.down) { root.hover-info("", 0, 0); }
+        }
+    }
+    changed text => {
+        if (hover.has-hover) {
+            root.hover-info(root.text, root.absolute-position.x / 1px + root.width / 2px, root.absolute-position.y / 1px);
+        }
+    }
+}
+
+export component OverlayEditorButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> enabled: true;
+    in property <bool> active: false;
+    callback clicked();
+    height: 26px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: root.active ? #8da6c5 : #465366;
+    background: touch.pressed ? #3a4b61 : touch.has-hover ? #2b394b : root.active ? #293c52 : #1c2735;
+    opacity: root.enabled ? 1 : 0.4;
+    Text {
+        text: root.text;
+        color: #edf2f7;
+        font-size: 11px;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+}

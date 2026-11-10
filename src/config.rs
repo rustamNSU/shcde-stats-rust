@@ -6,6 +6,7 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
 use crate::obfuscation::admin_password_config_value;
+use crate::overlay_columns::{default_order, normalize_order};
 
 const CONFIG_DIR_NAME: &str = "shcde-monitor";
 const CONFIG_FILE_NAME: &str = "config.json";
@@ -111,6 +112,7 @@ impl AppConfig {
         self.overlay.font_size = self.overlay.font_size.clamp(10.0, 26.0);
         self.overlay.panel_opacity = self.overlay.panel_opacity.clamp(0.25, 1.0);
         self.overlay.heavy_read_ms = self.overlay.heavy_read_ms.clamp(50.0, 1000.0);
+        self.overlay.column_order = normalize_order(&self.overlay.column_order);
         self.timer.font_size = self.timer.font_size.clamp(10.0, 28.0);
         self.timer.panel_opacity = self.timer.panel_opacity.clamp(0.25, 1.0);
         self.timer.game_speed = quantized_game_speed(self.timer.game_speed);
@@ -160,6 +162,11 @@ pub struct OverlaySettings {
     pub heavy_read_ms: f32,
     #[serde(default = "default_true")]
     pub movable_frame: bool,
+    #[serde(
+        default = "default_order",
+        deserialize_with = "deserialize_column_order"
+    )]
+    pub column_order: Vec<String>,
 }
 
 impl Default for OverlaySettings {
@@ -169,8 +176,25 @@ impl Default for OverlaySettings {
             font_size: default_font_size(),
             heavy_read_ms: default_heavy_read_ms(),
             movable_frame: default_true(),
+            column_order: default_order(),
         }
     }
+}
+
+fn deserialize_column_order<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    Ok(value
+        .as_array()
+        .map(|entries| {
+            entries
+                .iter()
+                .filter_map(|entry| entry.as_str().map(str::to_owned))
+                .collect()
+        })
+        .unwrap_or_else(default_order))
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -377,5 +401,93 @@ mod tests {
         };
         config.normalize();
         assert_eq!(config.settings_tab, 1);
+    }
+
+    #[test]
+    fn existing_settings_gain_default_order_without_changing_visibility() {
+        let mut config: AppConfig = serde_json::from_value(serde_json::json!({
+            "title": "Custom match title",
+            "overlay": { "font_size": 21.0, "panel_opacity": 0.6 },
+            "columns": { "gold": false, "army": true, "produced_iron": true }
+        }))
+        .unwrap();
+        config.normalize();
+
+        assert_eq!(config.overlay.column_order, default_order());
+        assert_eq!(config.overlay.font_size, 21.0);
+        assert_eq!(config.overlay.panel_opacity, 0.6);
+        assert_eq!(config.title, "Custom match title");
+        assert!(!config.columns.gold);
+        assert!(config.columns.army);
+        assert!(config.columns.produced_iron);
+    }
+
+    #[test]
+    fn malformed_column_order_does_not_reset_other_settings() {
+        for malformed in [
+            serde_json::Value::Null,
+            serde_json::json!(42),
+            serde_json::json!("gold"),
+            serde_json::json!({ "gold": 1 }),
+        ] {
+            let mut config: AppConfig = serde_json::from_value(serde_json::json!({
+                "title": "Keep this title",
+                "overlay": { "font_size": 20.0, "column_order": malformed },
+                "columns": { "gold": false, "fear_factor": true },
+                "timer": { "game_speed": 65.0 }
+            }))
+            .unwrap();
+            config.normalize();
+
+            assert_eq!(config.title, "Keep this title");
+            assert_eq!(config.overlay.font_size, 20.0);
+            assert_eq!(config.timer.game_speed, 65.0);
+            assert!(!config.columns.gold);
+            assert!(config.columns.fear_factor);
+            assert_eq!(config.overlay.column_order, default_order());
+        }
+    }
+
+    #[test]
+    fn mixed_column_order_retains_valid_unique_entries_and_adds_missing_columns() {
+        let mut config: AppConfig = serde_json::from_value(serde_json::json!({
+            "overlay": {
+                "column_order": ["army", 7, "gold", null, "future_column", "army"]
+            }
+        }))
+        .unwrap();
+        config.normalize();
+
+        assert_eq!(&config.overlay.column_order[..2], &["army", "gold"]);
+        assert_eq!(config.overlay.column_order.len(), default_order().len());
+        assert_eq!(
+            config.overlay.column_order,
+            normalize_order(&["army".to_owned(), "gold".to_owned()])
+        );
+    }
+
+    #[test]
+    fn custom_column_order_and_hidden_columns_survive_settings_round_trip() {
+        let mut config = AppConfig::default();
+        config.overlay.column_order =
+            normalize_order(&["army_lost".to_owned(), "produced_iron".to_owned()]);
+        config.columns.gold = false;
+        config.columns.produced_iron = true;
+        config.columns.army_lost = false;
+        config.players[0].name = "Custom player".to_owned();
+        let json = serde_json::to_string_pretty(&config).unwrap();
+        let mut restored: AppConfig = serde_json::from_str(&json).unwrap();
+        restored.normalize();
+
+        assert_eq!(restored.overlay.column_order, config.overlay.column_order);
+        assert_eq!(restored.players[0].name, "Custom player");
+        assert!(!restored.columns.gold);
+        assert!(restored.columns.produced_iron);
+        assert!(!restored.columns.army_lost);
+        assert!(restored
+            .overlay
+            .column_order
+            .iter()
+            .any(|key| key == "gold"));
     }
 }
